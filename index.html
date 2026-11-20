@@ -4,6 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Irrigador</title>
+<meta name="theme-color" content="#1769aa">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
 <style>
   :root{--az:#1769aa;--az2:#e8f1f9;--vd:#2e7d32;--tx:#1d2733;--mu:#6b7785;--bd:#dde3ea;--bg:#f4f7fa}
   *{box-sizing:border-box}
@@ -303,6 +307,9 @@ $('btnDormir').onclick = async () => {
   if (alterado && !confirm('Há alterações não salvas. Encerrar mesmo assim?')) return;
   await cmd('SLEEP');
 };
+// App instalável / funciona offline
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
+
 window.addEventListener('beforeunload', e => { if (alterado) { e.preventDefault(); e.returnValue=''; } });
 </script>
 </body>
