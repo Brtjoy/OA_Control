@@ -533,7 +533,18 @@ async function conectar(){
     }
   } catch {}
   try{
-    ble.dev = await navigator.bluetooth.requestDevice({ filters:[{namePrefix:'Gota'},{namePrefix:'Irrigador'}], optionalServices:[UUID.svc] });
+    // 1) tenta o Gota Azul que este celular já conhece (sem abrir a lista do Chrome)
+    let dev = await dispositivoConhecido();
+    if (dev && !(await chegouPerto(dev))) dev = null;
+    // 2) senão, explica antes e abre a lista do Chrome
+    if (!dev) {
+      const ok = await confirmar({ icone:'📶', titulo:'Procurar o Gota Azul',
+        texto:'Na próxima tela, toque em “Gota Azul” e depois em “Parear”.', ok:'Continuar' });
+      if (!ok) { if (api) pillConexao(); else pill('', 'Desconectado'); return; }
+      dev = await navigator.bluetooth.requestDevice({ filters:[{namePrefix:'Gota'},{namePrefix:'Irrigador'}], optionalServices:[UUID.svc] });
+    }
+    ble.dev = dev;
+    ble.dev.removeEventListener('gattserverdisconnected', aoDesconectar);
     ble.dev.addEventListener('gattserverdisconnected', aoDesconectar);
     saindo = false;
     pill('wait','Conectando…');
@@ -578,6 +589,31 @@ async function autenticarBle(){
     toast('Este celular agora é o mestre ✔');
   } else if (s) salvarSessao({ ...s, nuvem: r.nuvem || s.nuvem || '' });
   return true;
+}
+
+// Aparelho já pareado antes (o Chrome lembra a permissão)
+async function dispositivoConhecido(){
+  try {
+    if (!navigator.bluetooth.getDevices) return null;
+    const lista = await navigator.bluetooth.getDevices();
+    return lista.find(d => /^(Gota|Irrigador)/.test(d.name || '')) || null;
+  } catch { return null; }
+}
+// Espera o aparelho conhecido aparecer por perto (até 6 s)
+async function chegouPerto(dev){
+  if (!dev.watchAdvertisements) return true;          // navegador sem esse recurso: tenta conectar direto
+  pill('wait', 'Procurando…');
+  try {
+    const visto = new Promise(res => {
+      const f = () => { dev.removeEventListener('advertisementreceived', f); res(true); };
+      dev.addEventListener('advertisementreceived', f);
+      setTimeout(() => res(false), 6000);
+    });
+    await dev.watchAdvertisements();
+    const ok = await visto;
+    try { dev.unwatchAdvertisements && dev.unwatchAdvertisements(); } catch {}
+    return ok;
+  } catch { return false; }
 }
 
 async function iniciarSessao(sincronizarHora){
