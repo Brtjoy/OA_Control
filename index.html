@@ -2,338 +2,654 @@
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Irrigador</title>
 <meta name="theme-color" content="#1769aa">
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
 <style>
-  :root{--az:#1769aa;--az2:#e8f1f9;--vd:#2e7d32;--tx:#1d2733;--mu:#6b7785;--bd:#dde3ea;--bg:#f4f7fa}
-  *{box-sizing:border-box}
-  body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--tx)}
-  header{position:sticky;top:0;z-index:5;background:var(--az);color:#fff;padding:12px 16px;display:flex;align-items:center;gap:12px}
-  header h1{font-size:1.15rem;margin:0;flex:1}
-  #estado{font-size:.8rem;opacity:.85}
-  main{max-width:560px;margin:0 auto;padding:12px}
-  main.desab{opacity:.45;pointer-events:none}
-  .card{background:#fff;border:1px solid var(--bd);border-radius:12px;padding:14px 16px;margin-bottom:12px}
-  h2{font-size:1rem;margin:0 0 10px}
-  h3{font-size:.85rem;margin:14px 0 6px;color:var(--mu);font-weight:600;text-transform:uppercase;letter-spacing:.03em}
-  .linha{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px dashed var(--bd);font-size:.92rem}
-  .linha:last-of-type{border-bottom:0}
-  .linha span{color:var(--mu)}
-  button{font:inherit;border:0;border-radius:8px;padding:9px 14px;background:var(--az);color:#fff;cursor:pointer}
-  button.sec{background:var(--az2);color:var(--az)}
+  :root{
+    --az:#1769aa; --az-esc:#0f4f82; --az-cl:#e7f0f8; --vd:#1f8a4c; --vd-cl:#e3f4ea;
+    --am:#b26a00; --am-cl:#fff3df; --vm:#c62828;
+    --tx:#18222d; --mu:#6a7684; --bd:#e2e7ed; --bg:#f2f5f8; --card:#fff;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--tx);font-size:16px}
+  button{font:inherit;border:0;cursor:pointer;border-radius:10px;background:none;color:inherit}
   button:disabled{opacity:.4;cursor:default}
-  header button{background:#fff;color:var(--az)}
-  input,select{font:inherit;padding:7px 8px;border:1px solid var(--bd);border-radius:8px;background:#fff}
-  input[type=number]{width:5.2em}
-  input[type=range]{width:100%;padding:0}
-  .acoes{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:10px}
-  .dias{display:flex;gap:6px;flex-wrap:wrap}
-  .dias button{background:#eef1f4;color:var(--mu);padding:7px 0;width:3.1em}
-  .dias button.on{background:var(--az);color:#fff}
-  .prog{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--bd)}
-  .prog .rm{margin-left:auto;background:none;color:#b3261e;padding:6px 8px}
-  .prog.off input[type=time],.prog.off input[type=number]{opacity:.45}
-  .sw{display:flex;align-items:center;gap:8px;font-weight:600}
-  .sw input{width:20px;height:20px}
-  .info{font-size:.8rem;color:var(--mu);margin:6px 0 0}
-  .regando{margin-top:10px;background:#e8f5e9;color:var(--vd);border-radius:8px;padding:10px;font-weight:600}
-  .aviso{max-width:560px;margin:12px auto 0;padding:10px 14px;border-radius:10px;background:#fff4e5;color:#8a4b00;font-size:.9rem}
+  input{font:inherit}
   .hidden{display:none!important}
-  .rodape{position:sticky;bottom:0;display:flex;gap:8px;padding:10px 0;background:linear-gradient(transparent,var(--bg) 30%)}
-  .rodape #btnSalvar{flex:1;padding:12px}
-  #btnSalvar.pend{background:#e65100}
-  #toast{position:fixed;left:50%;bottom:80px;transform:translateX(-50%);background:#263238;color:#fff;padding:9px 16px;border-radius:20px;font-size:.9rem;opacity:0;transition:opacity .3s;pointer-events:none}
+
+  /* topo */
+  header{position:sticky;top:0;z-index:10;background:var(--az);color:#fff;padding:12px 16px;display:flex;align-items:center;gap:10px;box-shadow:0 2px 8px rgba(0,0,0,.12)}
+  header h1{font-size:1.15rem;margin:0;flex:1;display:flex;align-items:center;gap:8px}
+  .pill{display:flex;align-items:center;gap:6px;font-size:.78rem;background:rgba(255,255,255,.15);padding:5px 10px;border-radius:20px}
+  .pill i{width:8px;height:8px;border-radius:50%;background:#ff8a80}
+  .pill.on i{background:#69f0ae}
+  .pill.wait i{background:#ffd54f}
+
+  main{max-width:560px;margin:0 auto;padding:12px 12px 110px}
+  .card{background:var(--card);border-radius:16px;padding:16px;margin-bottom:12px;box-shadow:0 1px 3px rgba(16,40,70,.06)}
+  .card h2{font-size:.82rem;text-transform:uppercase;letter-spacing:.05em;color:var(--mu);margin:0 0 12px;font-weight:700;display:flex;justify-content:space-between;align-items:center}
+  .info{font-size:.82rem;color:var(--mu)}
+
+  .btn{background:var(--az);color:#fff;padding:11px 16px;font-weight:600}
+  .btn.sec{background:var(--az-cl);color:var(--az)}
+  .btn.perigo{background:#fdecea;color:var(--vm)}
+  .btn.full{width:100%}
+
+  /* boas-vindas */
+  .boas{text-align:center;padding:28px 20px}
+  .boas .gota{font-size:3rem}
+  .boas h3{margin:8px 0 6px}
+  .boas ol{text-align:left;color:var(--mu);font-size:.92rem;line-height:1.6;padding-left:22px}
+  .boas .btn{margin-top:8px}
+  .erro{background:var(--am-cl);color:var(--am);border-radius:10px;padding:10px 12px;font-size:.88rem;margin-bottom:12px;text-align:left}
+
+  /* estado principal */
+  .hero{padding:20px}
+  .hero .rot{font-size:.85rem;color:var(--mu);font-weight:600}
+  .hero .grande{font-size:2.1rem;font-weight:750;letter-spacing:-.02em;margin:2px 0}
+  .hero .sub{color:var(--mu);font-size:.95rem}
+  .hero.regando{background:linear-gradient(135deg,#e3f4ea,#f4fbf7)}
+  .hero.regando .grande{color:var(--vd)}
+  .hero.pausa{background:var(--am-cl)}
+  .hero.pausa .grande{color:var(--am)}
+  .barra{height:10px;background:rgba(31,138,76,.15);border-radius:6px;overflow:hidden;margin:14px 0 12px}
+  .barra>div{height:100%;background:var(--vd);border-radius:6px;transition:width 1s linear}
+  .hero-rodape{display:flex;align-items:center;justify-content:space-between;margin-top:16px;padding-top:14px;border-top:1px solid var(--bd)}
+  .hero.regando .hero-rodape,.hero.pausa .hero-rodape{border-top-color:rgba(0,0,0,.08)}
+
+  /* switch */
+  .sw{position:relative;display:inline-flex;align-items:center;gap:10px;cursor:pointer;font-weight:600}
+  .sw input{position:absolute;opacity:0;pointer-events:none}
+  .sw .tr{width:46px;height:28px;background:#c9d1da;border-radius:14px;position:relative;transition:.2s;flex:none}
+  .sw .tr::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.25);transition:.2s}
+  .sw input:checked+.tr{background:var(--az)}
+  .sw input:checked+.tr::after{left:21px}
+  .sw.peq .tr{width:40px;height:24px}
+  .sw.peq .tr::after{width:18px;height:18px}
+  .sw.peq input:checked+.tr::after{left:19px}
+
+  /* chips */
+  .chips{display:flex;gap:8px;flex-wrap:wrap}
+  .chip{background:var(--az-cl);color:var(--az);padding:10px 14px;border-radius:22px;font-weight:600;font-size:.92rem}
+  .chip:active{transform:scale(.97)}
+
+  /* linha do tempo */
+  .tl{position:relative;height:34px;background:#eef2f6;border-radius:8px;margin:4px 0 4px;overflow:hidden}
+  .tl .bl{position:absolute;top:6px;bottom:6px;background:var(--az);border-radius:4px;min-width:4px}
+  .tl .agora{position:absolute;top:0;bottom:0;width:2px;background:var(--vm)}
+  .tl-esc{display:flex;justify-content:space-between;font-size:.72rem;color:var(--mu);margin-bottom:14px}
+
+  /* horários */
+  .prog{border:1px solid var(--bd);border-radius:14px;padding:12px;margin-bottom:10px;transition:opacity .2s}
+  .prog.off{opacity:.5}
+  .prog-top{display:flex;align-items:center;gap:10px}
+  .prog .hora{font-size:1.5rem;font-weight:700;border:0;background:transparent;color:var(--tx);padding:0;min-width:0;width:auto;flex:1 1 auto;max-width:11rem}
+  .prog .hora::-webkit-calendar-picker-indicator{opacity:.45;margin-left:2px}
+  .step{display:flex;align-items:center;background:#eef2f6;border-radius:10px;margin-left:auto}
+  .step button{width:36px;height:36px;font-size:1.2rem;color:var(--az);font-weight:700}
+  .step span{min-width:62px;text-align:center;font-weight:600;font-size:.92rem}
+  .dias{display:flex;gap:5px;margin:12px 0 8px}
+  .dias-rot{font-size:.78rem;color:var(--mu);margin:12px 0 6px;display:flex;justify-content:space-between;align-items:center}
+  .atalhos{display:flex;gap:4px}
+  .atalhos button{white-space:nowrap;font-size:.72rem;color:var(--az);padding:3px 7px;border-radius:6px;background:var(--az-cl);font-weight:600}
+  .dias{display:flex;gap:5px;margin:0 0 10px}
+  .dias button{flex:1;padding:8px 0 6px;border-radius:8px;background:#fff;border:1.5px solid #cdd6df;color:#9aa6b2;font-size:.78rem;font-weight:600;line-height:1.1}
+  .dias button::after{content:"";display:block;height:12px;font-size:.7rem}
+  .dias button.on{background:var(--az);border-color:var(--az);color:#fff}
+  .dias button.on::after{content:"✓"}
+  .frase{background:var(--az-cl);color:var(--az-esc);border-radius:10px;padding:8px 10px;font-size:.88rem;margin-bottom:10px}
+  .frase.ruim{background:#fdecea;color:var(--vm)}
+  .prog-rod{display:flex;align-items:center;justify-content:space-between}
+  .prog-rod .rm{color:var(--vm);font-size:.85rem;padding:6px 4px}
+  .novo{width:100%;padding:12px;border:2px dashed #c6d3e0;border-radius:14px;color:var(--az);font-weight:600}
+  .resumo{margin-top:10px;font-size:.85rem;color:var(--mu);text-align:center}
+
+  /* ajustes */
+  .linha{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px 0}
+  input[type=range]{width:100%;accent-color:var(--az);margin:8px 0 2px}
+  .escala{display:flex;justify-content:space-between;font-size:.72rem;color:var(--mu)}
+  .sep{height:1px;background:var(--bd);margin:14px 0}
+
+  details summary{cursor:pointer;font-weight:600;color:var(--mu);font-size:.9rem;list-style:none}
+  details summary::before{content:"▸ "}
+  details[open] summary::before{content:"▾ "}
+  .kv{display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px dashed var(--bd);font-size:.88rem}
+  .kv span{color:var(--mu)} .kv b{text-align:right}
+
+  /* barra salvar */
+  .salvar{position:fixed;left:0;right:0;bottom:0;z-index:20;background:#1d2733;color:#fff;padding:12px 16px calc(12px + env(safe-area-inset-bottom));display:flex;align-items:center;gap:10px;transform:translateY(110%);transition:transform .25s}
+  .salvar.show{transform:none}
+  .salvar span{flex:1;font-size:.9rem}
+  .salvar .desc{color:#b0bec5;padding:10px}
+  .salvar .btn{background:#4fc3f7;color:#0b2233}
+
+  #toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:#263238;color:#fff;padding:10px 18px;border-radius:22px;font-size:.9rem;opacity:0;transition:opacity .3s;pointer-events:none;z-index:30;max-width:90vw;text-align:center}
   #toast.show{opacity:1}
+  .demo-tag{background:#ffd54f;color:#5d4300;font-size:.7rem;font-weight:700;padding:3px 8px;border-radius:10px}
 </style>
 </head>
 <body>
 <header>
-  <h1>💧 Irrigador</h1>
-  <span id="estado">Desconectado</span>
-  <button id="btnCon">Conectar</button>
+  <h1>💧 Irrigador <span id="demoTag" class="demo-tag hidden">DEMO</span></h1>
+  <div id="pill" class="pill"><i></i><span id="pillTxt">Desconectado</span></div>
 </header>
 
-<div id="aviso" class="aviso">Aperte o botão <b>RESET</b> do controlador para ativar o Bluetooth (fica ativo por 10 min) e toque em <b>Conectar</b>.</div>
-
-<main id="app" class="desab">
-  <section class="card">
-    <h2>Agora</h2>
-    <div class="linha"><span>Relógio do controlador</span><b id="hora">—</b></div>
-    <div class="linha"><span>Próxima rega</span><b id="prox">—</b></div>
-    <div class="linha"><span>Última rega</span><b id="ult">—</b></div>
-    <div class="linha"><span>Pausa</span><b id="pausaTxt">—</b></div>
-    <div class="linha"><span>Diagnóstico</span><b id="diag" style="text-align:right">—</b></div>
-    <div id="regandoBox" class="regando hidden">💦 Regando… faltam <span id="resta"></span></div>
-    <div class="acoes">
-      <input id="manualMin" type="number" min="0.5" max="120" step="0.5" value="1"> min
-      <button id="btnRun">Regar agora</button>
-      <button id="btnStop" class="sec">Parar</button>
-    </div>
-    <div class="acoes"><button id="btnSync" class="sec">Sincronizar relógio com este aparelho</button></div>
+<main>
+  <!-- desconectado -->
+  <section id="telaInicial" class="card boas">
+    <div class="gota">💧</div>
+    <h3>Conectar ao controlador</h3>
+    <div id="erro" class="erro hidden"></div>
+    <ol>
+      <li>Aperte o botão <b>RESET</b> da placa.</li>
+      <li>Em até 10 minutos, toque em <b>Conectar</b>.</li>
+      <li>Escolha <b>Irrigador</b> na lista.</li>
+    </ol>
+    <button id="btnCon" class="btn full">Conectar</button>
+    <p><button id="btnDemo" class="info" style="text-decoration:underline">Ver demonstração sem a placa</button></p>
   </section>
 
-  <section class="card">
-    <h2>Programação</h2>
-    <label class="sw"><input type="checkbox" id="ativo"> Irrigação automática ligada</label>
-    <h3>Dias da semana</h3>
-    <div id="dias" class="dias"></div>
-    <h3>Horários (até 8 por dia)</h3>
-    <div id="progs"></div>
-    <div class="acoes"><button id="btnAdd" class="sec">+ Adicionar horário</button></div>
-    <p class="info" id="totalDia"></p>
-  </section>
+  <div id="app" class="hidden">
+    <!-- estado -->
+    <section id="hero" class="card hero">
+      <div class="rot" id="heroRot">Próxima rega</div>
+      <div class="grande" id="heroGrande">—</div>
+      <div class="sub" id="heroSub"></div>
+      <div id="heroBarra" class="barra hidden"><div></div></div>
+      <button id="btnParar" class="btn perigo full hidden">■ Parar rega</button>
+      <button id="btnRetomar" class="btn sec full hidden">Retomar irrigação</button>
+      <div class="hero-rodape">
+        <span>Irrigação automática</span>
+        <label class="sw"><input type="checkbox" id="ativo"><span class="tr"></span></label>
+      </div>
+    </section>
 
-  <section class="card">
-    <h2>Ajustes</h2>
-    <div class="linha"><span>Ajuste sazonal</span><b id="ajusteVal">100%</b></div>
-    <input type="range" id="ajuste" min="0" max="200" step="10">
-    <p class="info">Multiplica todas as durações. Ex.: 50% no inverno, 150% no verão, sem refazer os horários.</p>
-    <h3>Duração máxima por rega</h3>
-    <div class="acoes" style="margin-top:0"><input type="number" id="maxMin" min="1" max="120" step="1"> min</div>
-    <p class="info">Trava de segurança: nenhuma rega (automática ou manual) passa deste tempo.</p>
-  </section>
+    <!-- manual -->
+    <section class="card">
+      <h2>Regar agora</h2>
+      <div class="chips" id="chipsManual"></div>
+    </section>
 
-  <section class="card">
-    <h2>Pausa por chuva</h2>
-    <p class="info" style="margin-top:0">Suspende as regas automáticas por um período e retoma sozinho depois.</p>
-    <div class="acoes">
-      <select id="pausaDias">
-        <option value="1">1 dia</option><option value="2">2 dias</option><option value="3">3 dias</option>
-        <option value="7">1 semana</option><option value="14">2 semanas</option>
-      </select>
-      <button id="btnPausa" class="sec">Pausar</button>
-      <button id="btnRetomar" class="sec">Retomar agora</button>
-    </div>
-  </section>
+    <!-- agenda -->
+    <section class="card">
+      <h2>Horários <span class="info" id="tlRot" style="text-transform:none;letter-spacing:0;font-weight:500"></span></h2>
+      <div class="tl" id="tl"></div>
+      <div class="tl-esc"><span>0h</span><span>6h</span><span>12h</span><span>18h</span><span>24h</span></div>
+      <div id="progs"></div>
+      <button id="btnAdd" class="novo">+ Novo horário</button>
+      <div class="resumo" id="resumo"></div>
+    </section>
 
-  <div class="rodape">
-    <button id="btnSalvar">Salvar configuração</button>
-    <button id="btnDormir" class="sec">Encerrar</button>
+    <!-- ajustes -->
+    <section class="card">
+      <h2>Ajustes</h2>
+      <div class="linha"><span><b>Ajuste sazonal</b><br><span class="info">Multiplica todos os tempos</span></span><b id="ajusteVal" style="font-size:1.3rem">100%</b></div>
+      <input type="range" id="ajuste" min="0" max="200" step="10">
+      <div class="escala"><span>0%</span><span>Inverno 50%</span><span>Normal 100%</span><span>Verão 150%</span><span>200%</span></div>
+      <div class="sep"></div>
+      <div class="linha">
+        <span><b>Tempo máximo por rega</b><br><span class="info">Trava de segurança da bomba</span></span>
+        <div class="step"><button data-max="-1">−</button><span id="maxVal">30 min</span><button data-max="1">+</button></div>
+      </div>
+    </section>
+
+    <!-- chuva -->
+    <section class="card">
+      <h2>Choveu? Pausar irrigação</h2>
+      <div class="chips">
+        <button class="chip" data-pausa="1">1 dia</button>
+        <button class="chip" data-pausa="2">2 dias</button>
+        <button class="chip" data-pausa="3">3 dias</button>
+        <button class="chip" data-pausa="7">1 semana</button>
+      </div>
+      <p class="info" style="margin-bottom:0">As regas automáticas voltam sozinhas no fim do período.</p>
+    </section>
+
+    <!-- avançado -->
+    <section class="card">
+      <details>
+        <summary>Controlador</summary>
+        <div style="margin-top:10px">
+          <div class="kv"><span>Relógio</span><b id="hora">—</b></div>
+          <div class="kv"><span>Última rega</span><b id="ult">—</b></div>
+          <div class="kv"><span>Diagnóstico</span><b id="diag">—</b></div>
+          <div class="kv"><span>Firmware</span><b id="fw">—</b></div>
+          <div class="chips" style="margin-top:12px">
+            <button id="btnSync" class="chip">Acertar relógio</button>
+            <button id="btnDormir" class="chip">Desligar Bluetooth</button>
+            <button id="btnDesc" class="chip">Desconectar</button>
+          </div>
+        </div>
+      </details>
+    </section>
   </div>
 </main>
+
+<div id="barraSalvar" class="salvar">
+  <span>Alterações não salvas</span>
+  <button id="btnDescartar" class="desc">Descartar</button>
+  <button id="btnSalvar" class="btn">Salvar</button>
+</div>
 <div id="toast"></div>
 
 <script>
+// ===================== Constantes =====================
 const BASE = '-3c4b-4e5a-9b1d-2f6c8a9e0b10';
 const UUID = { svc:'7a1f0001'+BASE, cfg:'7a1f0002'+BASE, hora:'7a1f0003'+BASE, cmd:'7a1f0004'+BASE, status:'7a1f0005'+BASE };
 const DIAS = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
 const MAX_PROG = 8;
+const PASSOS = [30,60,120,180,240,300,420,600,900,1200,1500,1800,2400,2700,3600,4500,5400,7200]; // segundos
+const MANUAL_MIN = [1,5,10,15,30];
+
 const $ = id => document.getElementById(id);
 const enc = new TextEncoder(), dec = new TextDecoder();
-
-let dev = null, ch = {}, cfg = null, poll = null, alterado = false;
-
-// Web Bluetooth não aceita duas operações GATT ao mesmo tempo: fila simples
-let fila = Promise.resolve();
-function gatt(fn){ const p = fila.then(fn); fila = p.catch(()=>{}); return p; }
-const ler = c => gatt(async () => dec.decode(await c.readValue()));
-const escrever = (c, txt) => gatt(() => c.writeValueWithResponse(enc.encode(txt)));
 const espera = ms => new Promise(r => setTimeout(r, ms));
-
-// O RTC guarda hora LOCAL; trocamos "unix local" (segundos) com o ESP32
-const agoraLocal = () => Math.floor(Date.now()/1000) - new Date().getTimezoneOffset()*60;
 const pad = n => String(n).padStart(2,'0');
-function fmt(u, comSeg){
-  if (!u) return '—';
-  const o = {timeZone:'UTC', weekday:'short', day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'};
-  if (comSeg) o.second = '2-digit';
-  return new Date(u*1000).toLocaleString('pt-BR', o);
-}
+// O controlador trabalha com hora LOCAL em "unixtime" (segundos)
+const agoraLocal = () => Math.floor(Date.now()/1000) - new Date().getTimezoneOffset()*60;
+
+// ===================== Estado =====================
+let api = null;            // ble ou demo
+let cfg = null;            // configuração em edição
+let salvo = '';            // JSON da última configuração salva
+let st = null, stEm = 0;   // último status e quando chegou (ms)
+let poll = null, saindo = false, reconectando = false;
+
+// ===================== Formatação =====================
 function fmtDur(s){
-  s = Math.round(s||0);
+  s = Math.max(0, Math.round(s||0));
   if (s < 60) return s + ' s';
-  const m = Math.floor(s/60), r = s%60;
+  const h = Math.floor(s/3600), m = Math.floor((s%3600)/60), r = s%60;
+  if (h) return m ? `${h} h ${m} min` : `${h} h`;
   return r ? `${m} min ${r} s` : `${m} min`;
 }
-function toast(t){ const e=$('toast'); e.textContent=t; e.classList.add('show'); setTimeout(()=>e.classList.remove('show'),2200); }
-function aviso(t){ const e=$('aviso'); if(!t){e.classList.add('hidden');return;} e.innerHTML=t; e.classList.remove('hidden'); }
-function marcar(v=true){ alterado=v; const b=$('btnSalvar'); b.classList.toggle('pend',v); b.textContent = v ? 'Salvar configuração •' : 'Salvar configuração'; }
+function fmtRelogio(s){ s=Math.max(0,Math.round(s)); const m=Math.floor(s/60); return `${m}:${pad(s%60)}`; }
+function dataUTC(u){ return new Date(u*1000); }
+function fmtQuando(u, ref){
+  const d = dataUTC(u), hoje0 = ref - ref%86400, dia0 = u - u%86400;
+  const hm = `${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}`;
+  const dif = Math.round((dia0 - hoje0)/86400);
+  if (dif === 0) return `Hoje, ${hm}`;
+  if (dif === 1) return `Amanhã, ${hm}`;
+  if (dif < 7)  return `${DIAS[d.getUTCDay()]}, ${hm}`;
+  return `${pad(d.getUTCDate())}/${pad(d.getUTCMonth()+1)}, ${hm}`;
+}
+function fmtFalta(s){
+  if (s < 60) return 'em menos de 1 min';
+  const d = Math.floor(s/86400), h = Math.floor((s%86400)/3600), m = Math.floor((s%3600)/60);
+  if (d) return `em ${d} d ${h} h`;
+  if (h) return `em ${h} h ${m} min`;
+  return `em ${m} min`;
+}
+function toast(t){ const e=$('toast'); e.textContent=t; e.classList.add('show'); clearTimeout(e._t); e._t=setTimeout(()=>e.classList.remove('show'),2400); }
 
-// ---------------- Conexão ----------------
-let saindo = false;
+// ===================== Lógica da agenda (igual ao firmware) =====================
+const durEfet = p => Math.min(Math.round(p.d * cfg.ajuste/100), cfg.max);
+function proximo(c, agora){
+  if (!c.ativo) return null;
+  const hoje0 = agora - agora%86400;
+  for (let dd = 0; dd <= 40; dd++){
+    const dia0 = hoje0 + dd*86400, wd = dataUTC(dia0).getUTCDay();
+    let best = null;
+    c.prog.forEach((p,i) => {
+      if (!p.a || !((p.w>>wd)&1)) return;
+      const t = dia0 + p.h*3600 + p.m*60;
+      if (t <= agora+5 || t < (c.pausa||0)) return;
+      if (!best || t < best.t) best = {t, i};
+    });
+    if (best) return best;
+  }
+  return null;
+}
+
+// ===================== Bluetooth =====================
+const ble = {
+  dev:null, ch:{}, fila:Promise.resolve(),
+  op(fn){ const p = this.fila.then(fn); this.fila = p.catch(()=>{}); return p; },
+  ler(k){ return this.op(async () => dec.decode(await this.ch[k].readValue())); },
+  esc(k,t){ return this.op(() => this.ch[k].writeValueWithResponse(enc.encode(t))); },
+  async lerConfig(){ return JSON.parse(await this.ler('cfg')); },
+  salvarConfig(o){ return this.esc('cfg', JSON.stringify(o)); },
+  async lerStatus(){ return JSON.parse(await this.ler('status')); },
+  cmd(c){ return this.esc('cmd', c); },
+  hora(u){ return this.esc('hora', String(u)); },
+  async conectarGatt(){
+    this.fila = Promise.resolve();
+    const srv = await this.dev.gatt.connect();
+    const s = await srv.getPrimaryService(UUID.svc);
+    for (const k of ['cfg','hora','cmd','status']) this.ch[k] = await s.getCharacteristic(UUID[k]);
+  },
+  desconectar(){ if (this.dev && this.dev.gatt.connected) this.dev.gatt.disconnect(); }
+};
+
 async function conectar(){
   if (!navigator.bluetooth){
-    aviso('Este navegador não tem Web Bluetooth. Use o <b>Chrome</b> (Android ou computador). No iPhone, use o app <b>Bluefy</b>. A página precisa estar em <b>https://</b>.');
+    mostrarErro('Este navegador não tem Web Bluetooth. Use o <b>Chrome</b> no Android ou no computador (no iPhone, o app <b>Bluefy</b>).');
     return;
   }
   try{
-    dev = await navigator.bluetooth.requestDevice({ filters:[{namePrefix:'Irrigador'}], optionalServices:[UUID.svc] });
-    dev.addEventListener('gattserverdisconnected', aoDesconectar);
+    ble.dev = await navigator.bluetooth.requestDevice({ filters:[{namePrefix:'Irrigador'}], optionalServices:[UUID.svc] });
+    ble.dev.addEventListener('gattserverdisconnected', aoDesconectar);
     saindo = false;
-    await conectarGatt();
+    pill('wait','Conectando…');
+    await ble.conectarGatt();
+    api = ble;
+    await iniciarSessao(true);
   }catch(e){
-    $('estado').textContent = 'Desconectado';
-    if (e.name !== 'NotFoundError') aviso('Não foi possível conectar: ' + e.message);
+    pill('','Desconectado');
+    if (e.name !== 'NotFoundError') mostrarErro('Não foi possível conectar: ' + e.message + '<br>Aperte RESET na placa e tente de novo.');
   }
 }
-async function conectarGatt(){
-  $('estado').textContent = 'Conectando…';
-  fila = Promise.resolve();
-  const srv = await dev.gatt.connect();
-  const s = await srv.getPrimaryService(UUID.svc);
-  for (const k of ['cfg','hora','cmd','status']) ch[k] = await s.getCharacteristic(UUID[k]);
-  await sincronizar(true);
-  if (!alterado) await lerConfig();      // não apaga o que você estava editando
-  await lerStatus();
+
+async function iniciarSessao(sincronizarHora){
+  if (sincronizarHora) await api.hora(agoraLocal());
+  if (!alterado()) { cfg = normalizar(await api.lerConfig()); salvo = JSON.stringify(cfg); }
+  await atualizarStatus();
   clearInterval(poll);
-  poll = setInterval(() => lerStatus().catch(()=>{}), 2000);
-  $('estado').textContent = 'Conectado';
-  $('btnCon').textContent = 'Desconectar';
-  $('app').classList.remove('desab');
-  aviso(null);
+  poll = setInterval(() => atualizarStatus().catch(()=>{}), 2000);
+  pill('on', api === demo ? 'Demonstração' : 'Conectado');
+  $('demoTag').classList.toggle('hidden', api !== demo);
+  $('telaInicial').classList.add('hidden');
+  $('app').classList.remove('hidden');
+  renderTudo();
 }
-let reconectando = false;
+
 async function aoDesconectar(){
-  if (reconectando) return;          // evento repetido durante a reconexão
+  if (reconectando) return;
   clearInterval(poll); poll = null;
   const hora = new Date().toLocaleTimeString('pt-BR');
   if (!saindo){
     reconectando = true;
     for (let t = 1; t <= 5; t++){
-      $('estado').textContent = `Reconectando (${t}/5)…`;
+      pill('wait', `Reconectando ${t}/5…`);
       await espera(1500);
-      try { await conectarGatt(); reconectando = false; return; } catch(e) {}
+      try { await ble.conectarGatt(); reconectando = false; await iniciarSessao(false); return; } catch(e) {}
     }
     reconectando = false;
   }
-  $('estado').textContent = 'Desconectado';
-  $('btnCon').textContent = 'Conectar';
-  $('app').classList.add('desab');
-  aviso(saindo ? 'Desconectado.' :
-    `A conexão caiu às ${hora} e não voltou. Aperte <b>RESET</b> no controlador e toque em <b>Conectar</b>.`);
-}
-$('btnCon').onclick = () => { if (dev && dev.gatt.connected) { saindo = true; dev.gatt.disconnect(); } else conectar(); };
-
-// ---------------- Leitura ----------------
-async function lerConfig(){
-  cfg = JSON.parse(await ler(ch.cfg));
-  cfg.prog = cfg.prog || [];
-  render();
-  marcar(false);
-}
-async function lerStatus(){
-  let s;
-  try { s = JSON.parse(await ler(ch.status)); } catch { return; }
-  $('hora').textContent = s.rtcAus ? 'RTC não encontrado!' : (s.rtcOk ? fmt(s.agora, true) : 'não ajustado');
-  $('prox').textContent = s.prox ? `${fmt(s.prox)} · ${fmtDur(s.proxDur)}` : (cfg && !cfg.ativo ? 'automático desligado' : 'nenhuma');
-  $('ult').textContent  = s.ult ? `${fmt(s.ult)} · ${fmtDur(s.ultDur)}` : '—';
-  $('pausaTxt').textContent = (s.pausa && s.pausa > s.agora) ? 'até ' + fmt(s.pausa) : 'não';
-  $('regandoBox').classList.toggle('hidden', !s.regando);
-  $('resta').textContent = fmtDur(s.resta);
-  $('diag').textContent = `boot #${s.boots ?? '?'} · ${s.reset ?? '?'} · ligado há ${fmtDur(s.up)}`;
-  if (s.rtcOk && Math.abs(s.agora - agoraLocal()) > 120) sincronizar(true);
+  pill('','Desconectado');
+  $('app').classList.add('hidden');
+  $('telaInicial').classList.remove('hidden');
+  $('barraSalvar').classList.remove('show');
+  if (!saindo) mostrarErro(`A conexão caiu às ${hora}. Aperte <b>RESET</b> na placa e conecte de novo.`);
+  else $('erro').classList.add('hidden');
 }
 
-// ---------------- Render ----------------
-function render(){
-  $('ativo').checked = !!cfg.ativo;
-  const d = $('dias'); d.innerHTML = '';
-  DIAS.forEach((nome,i) => {
-    const b = document.createElement('button');
-    b.textContent = nome;
-    b.className = (cfg.dias >> i) & 1 ? 'on' : '';
-    b.onclick = () => { cfg.dias ^= (1<<i); b.classList.toggle('on'); marcar(); totalDia(); };
-    d.appendChild(b);
+function pill(cls, txt){ $('pill').className = 'pill ' + cls; $('pillTxt').textContent = txt; }
+function mostrarErro(html){ const e=$('erro'); e.innerHTML=html; e.classList.remove('hidden'); }
+
+// ===================== Demonstração (sem placa) =====================
+const demo = {
+  c:{ ativo:true, ajuste:100, max:1800, pausa:0, prog:[
+      {h:6, m:0,  d:600, a:1, w:127},
+      {h:18,m:30, d:300, a:1, w:0b0101010} ]},
+  rega:null, ult:0, ultDur:0, t0:Date.now(),
+  async lerConfig(){ return JSON.parse(JSON.stringify(this.c)); },
+  async salvarConfig(o){ this.c = JSON.parse(JSON.stringify(o)); },
+  async hora(){},
+  async cmd(c){
+    const a = agoraLocal();
+    if (this.rega && (c === 'STOP' || c.startsWith('RUN:'))) { this.ult = this.rega.ini; this.ultDur = a - this.rega.ini; this.rega = null; }
+    if (c.startsWith('RUN:')) this.rega = { ini:a, dur: Math.min(+c.slice(4), this.c.max) };
+    if (c === 'SLEEP') { saindo = true; aoDesconectar(); }
+  },
+  async lerStatus(){
+    const a = agoraLocal();
+    if (this.rega && a >= this.rega.ini + this.rega.dur) { this.ult=this.rega.ini; this.ultDur=this.rega.dur; this.rega=null; }
+    const salvoCfg = this.c, px = proximo(salvoCfg, a);
+    const dEf = i => Math.min(Math.round(salvoCfg.prog[i].d*salvoCfg.ajuste/100), salvoCfg.max);
+    return { agora:a, rtcOk:true, regando:!!this.rega,
+      resta: this.rega ? this.rega.ini + this.rega.dur - a : 0, total: this.rega ? this.rega.dur : 0, origem:-1,
+      prox: px ? px.t : 0, proxDur: px ? dEf(px.i) : 0, ult:this.ult, ultDur:this.ultDur,
+      pausa: salvoCfg.pausa, fw:'demo', boots:1, reset:'demonstração', up: Math.round((Date.now()-this.t0)/1000) };
+  }
+};
+$('btnDemo').onclick = () => { api = demo; saindo = false; iniciarSessao(false); };
+
+// ===================== Status =====================
+async function atualizarStatus(){
+  try { st = await api.lerStatus(); stEm = Date.now(); } catch { return; }
+  if (api === ble && st.rtcOk && Math.abs(st.agora - agoraLocal()) > 120) api.hora(agoraLocal());
+  renderHero(); renderControlador(); renderTimeline();
+}
+const passou = () => st ? Math.floor((Date.now() - stEm)/1000) : 0;
+
+function renderHero(){
+  if (!st || !cfg) return;
+  const h = $('hero'), agora = st.agora + passou();
+  const salvoCfg = JSON.parse(salvo);
+  h.className = 'card hero';
+  $('heroBarra').classList.add('hidden'); $('btnParar').classList.add('hidden'); $('btnRetomar').classList.add('hidden');
+  $('ativo').checked = !!salvoCfg.ativo;
+
+  if (st.rtcAus || !st.rtcOk){
+    $('heroRot').textContent = 'Atenção';
+    $('heroGrande').textContent = st.rtcAus ? 'RTC não encontrado' : 'Relógio não ajustado';
+    $('heroSub').textContent = st.rtcAus ? 'Confira a ligação do DS3231 (SDA/SCL).' : 'Toque em “Acertar relógio” em Controlador.';
+    return;
+  }
+  if (st.regando){
+    const resta = Math.max(0, st.resta - passou()), total = st.total || st.resta || 1;
+    h.classList.add('regando');
+    $('heroRot').textContent = st.origem >= 0 ? 'Regando (programado)' : 'Regando (manual)';
+    $('heroGrande').textContent = fmtRelogio(resta);
+    $('heroSub').textContent = `restantes de ${fmtDur(total)}`;
+    $('heroBarra').classList.remove('hidden');
+    $('heroBarra').firstElementChild.style.width = (100*(1 - resta/total)).toFixed(1) + '%';
+    $('btnParar').classList.remove('hidden');
+    return;
+  }
+  if (st.pausa && st.pausa > agora){
+    h.classList.add('pausa');
+    $('heroRot').textContent = 'Pausado por chuva';
+    $('heroGrande').textContent = 'até ' + fmtQuando(st.pausa, agora);
+    $('heroSub').textContent = st.prox ? `Depois: ${fmtQuando(st.prox, agora)} · ${fmtDur(st.proxDur)}` : '';
+    $('btnRetomar').classList.remove('hidden');
+    return;
+  }
+  if (!salvoCfg.ativo){
+    $('heroRot').textContent = 'Irrigação automática';
+    $('heroGrande').textContent = 'Desligada';
+    $('heroSub').textContent = 'Nenhuma rega vai acontecer sozinha.';
+    return;
+  }
+  if (!st.prox){
+    $('heroRot').textContent = 'Próxima rega';
+    $('heroGrande').textContent = 'Nenhuma';
+    $('heroSub').textContent = 'Adicione um horário ativo com pelo menos um dia.';
+    return;
+  }
+  $('heroRot').textContent = 'Próxima rega';
+  $('heroGrande').textContent = fmtQuando(st.prox, agora);
+  $('heroSub').textContent = `${fmtFalta(st.prox - agora)} · ${fmtDur(st.proxDur)} de rega`;
+}
+setInterval(() => { if (st && st.regando) renderHero(); }, 1000);
+
+function renderControlador(){
+  if (!st) return;
+  const agora = st.agora + passou();
+  $('hora').textContent = st.rtcOk ? dataUTC(agora).toLocaleString('pt-BR',{timeZone:'UTC',weekday:'short',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit'}) : 'não ajustado';
+  $('ult').textContent = st.ult ? `${fmtQuando(st.ult, agora)} · ${fmtDur(st.ultDur)}` : '—';
+  $('diag').textContent = `boot #${st.boots ?? '?'} · ${st.reset ?? '?'} · ligado há ${fmtDur(st.up)}`;
+  $('fw').textContent = st.fw || '—';
+}
+
+// ===================== Configuração =====================
+function normalizar(c){
+  c.prog = (c.prog || []).map(p => ({ h:p.h|0, m:p.m|0, d:p.d|0, a:p.a?1:0, w:(p.w ?? c.dias ?? 127) & 127 }));
+  delete c.dias;
+  c.ajuste = c.ajuste ?? 100; c.max = c.max ?? 1800; c.pausa = c.pausa || 0; c.ativo = !!c.ativo;
+  return c;
+}
+const alterado = () => cfg && JSON.stringify(cfg) !== salvo;
+function marcar(){ $('barraSalvar').classList.toggle('show', alterado()); }
+
+function renderTudo(){ renderProgs(); renderAjustes(); renderHero(); renderControlador(); marcar(); }
+
+function renderTimeline(){
+  if (!cfg) return;
+  const ref = st ? st.agora + passou() : agoraLocal();
+  const wd = dataUTC(ref).getUTCDay(), seg = ref % 86400;
+  const tl = $('tl'); tl.innerHTML = '';
+  cfg.prog.forEach(p => {
+    if (!p.a || !((p.w>>wd)&1)) return;
+    const b = document.createElement('div'); b.className = 'bl';
+    b.style.left = ((p.h*3600+p.m*60)/864) + '%';
+    b.style.width = (durEfet(p)/864) + '%';
+    tl.appendChild(b);
   });
-  $('ajuste').value = cfg.ajuste;
-  $('ajusteVal').textContent = cfg.ajuste + '%';
-  $('maxMin').value = Math.round(cfg.max/60);
-  renderProgs();
+  const ag = document.createElement('div'); ag.className = 'agora'; ag.style.left = (seg/864) + '%'; tl.appendChild(ag);
+  $('tlRot').textContent = `hoje (${DIAS[wd].toLowerCase()})`;
 }
+
 function renderProgs(){
   const box = $('progs'); box.innerHTML = '';
   cfg.prog.forEach((p,i) => {
-    const r = document.createElement('div');
-    r.className = 'prog' + (p.a ? '' : ' off');
-    r.innerHTML = `
-      <input type="checkbox" data-i="${i}" data-k="a" ${p.a?'checked':''} title="Ativo">
-      <input type="time" data-i="${i}" data-k="t" value="${pad(p.h)}:${pad(p.m)}">
-      <input type="number" data-i="${i}" data-k="d" min="0.5" max="120" step="0.5" value="${+(p.d/60).toFixed(2)}"> min
-      <button class="rm" data-i="${i}" title="Remover">✕</button>`;
-    box.appendChild(r);
+    const el = document.createElement('div');
+    el.className = 'prog' + (p.a ? '' : ' off');
+    el.dataset.i = i;
+    const dEf = durEfet(p);
+    el.innerHTML = `
+      <div class="prog-top">
+        <input type="time" class="hora" value="${pad(p.h)}:${pad(p.m)}" data-act="hora">
+        <div class="step"><button data-act="menos">−</button><span>${fmtDur(p.d)}</span><button data-act="mais">+</button></div>
+      </div>
+      <div class="dias-rot"><span>Dias da rega:</span>
+        <span class="atalhos"><button data-act="w" data-w="127">Todos</button><button data-act="w" data-w="62">Seg–Sex</button><button data-act="w" data-w="0">Nenhum</button></span></div>
+      <div class="dias">${DIAS.map((n,d)=>`<button data-act="dia" data-d="${d}" class="${(p.w>>d)&1?'on':''}">${n}</button>`).join('')}</div>
+      <div class="frase ${p.w && p.a ? '' : 'ruim'}">${frase(p)}</div>
+      <div class="prog-rod">
+        <label class="sw peq"><input type="checkbox" data-act="ativo" ${p.a?'checked':''}><span class="tr"></span><span class="info">${p.a?'Ativo':'Desativado'}</span></label>
+        <span class="info">${dEf !== p.d ? 'Rega real: '+fmtDur(dEf) : ''}</span>
+        <button class="rm" data-act="rm">Remover</button>
+      </div>`;
+    box.appendChild(el);
   });
-  if (!cfg.prog.length) box.innerHTML = '<p class="info">Nenhum horário. Toque em “Adicionar horário”.</p>';
+  if (!cfg.prog.length) box.innerHTML = '<p class="info" style="text-align:center">Nenhum horário ainda.</p>';
   $('btnAdd').disabled = cfg.prog.length >= MAX_PROG;
-  totalDia();
+  $('btnAdd').textContent = cfg.prog.length >= MAX_PROG ? 'Máximo de 8 horários' : '+ Novo horário';
+  renderTimeline(); renderResumo();
 }
-function totalDia(){
-  if (!cfg) return;
-  const efet = p => Math.min(p.d * cfg.ajuste/100, cfg.max);
-  const ativos = cfg.prog.filter(p => p.a);
-  const tot = ativos.reduce((s,p) => s + efet(p), 0);
-  const nd = DIAS.filter((_,i) => (cfg.dias>>i)&1).length;
-  $('totalDia').textContent = ativos.length
-    ? `${ativos.length} rega(s) por dia · ${fmtDur(tot)} no total (com ajuste) · ${nd} dia(s) por semana`
-    : 'Nenhum horário ativo.';
+// "Rega toda quarta e sexta às 13:11 por 10 min"
+const NOMES = ['domingo','segunda','terça','quarta','quinta','sexta','sábado'];
+function descDias(w){
+  if (w === 127) return 'todos os dias';
+  if (w === 0b0111110) return 'de segunda a sexta';
+  if (w === 0b1000001) return 'sábado e domingo';
+  const l = NOMES.filter((_,d) => (w>>d)&1);
+  if (l.length === 1) return (l[0] === 'sábado' || l[0] === 'domingo' ? 'todo ' : 'toda ') + l[0];
+  return l.slice(0,-1).join(', ') + ' e ' + l[l.length-1];
+}
+function frase(p){
+  if (!p.a) return 'Desativado: este horário não vai regar.';
+  if (!p.w) return '⚠ Nenhum dia marcado: este horário não vai regar.';
+  return `Rega <b>${descDias(p.w)}</b> às <b>${pad(p.h)}:${pad(p.m)}</b> por <b>${fmtDur(durEfet(p))}</b>.`;
+}
+function renderResumo(){
+  let regas = 0, seg = 0;
+  cfg.prog.forEach(p => { if (!p.a) return; for (let d=0; d<7; d++) if ((p.w>>d)&1){ regas++; seg += durEfet(p); } });
+  $('resumo').textContent = regas ? `Por semana: ${regas} rega${regas>1?'s':''} · ${fmtDur(seg)} de água` : 'Nenhuma rega programada.';
+}
+function renderAjustes(){
+  $('ajuste').value = cfg.ajuste;
+  $('ajusteVal').textContent = cfg.ajuste + '%';
+  $('maxVal').textContent = fmtDur(cfg.max);
+}
+function passo(v, dir, min=30){
+  if (dir > 0) return PASSOS.find(x => x > v) ?? PASSOS[PASSOS.length-1];
+  const ant = [...PASSOS].reverse().find(x => x < v);
+  return Math.max(min, ant ?? min);
 }
 
-$('progs').addEventListener('input', e => {
-  const t = e.target, k = t.dataset.k; if (!k) return;
-  const p = cfg.prog[+t.dataset.i];
-  if (k === 'a') { p.a = t.checked ? 1 : 0; t.parentElement.classList.toggle('off', !t.checked); }
-  if (k === 't' && t.value) { const [h,m] = t.value.split(':').map(Number); p.h = h; p.m = m; }
-  if (k === 'd') p.d = Math.round((parseFloat(t.value) || 0) * 60);
-  marcar(); totalDia();
-});
+// eventos dos horários
 $('progs').addEventListener('click', e => {
-  if (!e.target.classList.contains('rm')) return;
-  cfg.prog.splice(+e.target.dataset.i, 1); renderProgs(); marcar();
+  const b = e.target.closest('[data-act]'); if (!b || b.tagName === 'INPUT') return;
+  const i = +b.closest('.prog').dataset.i, p = cfg.prog[i];
+  switch (b.dataset.act){
+    case 'mais':  p.d = passo(p.d, +1); break;
+    case 'menos': p.d = passo(p.d, -1); break;
+    case 'dia':   p.w ^= 1 << +b.dataset.d; break;
+    case 'w':     p.w = +b.dataset.w; break;
+    case 'rm':    if (!confirm(`Remover o horário das ${pad(p.h)}:${pad(p.m)}?`)) return; cfg.prog.splice(i,1); break;
+    default: return;
+  }
+  renderProgs(); marcar();
+});
+$('progs').addEventListener('change', e => {
+  const t = e.target, act = t.dataset.act; if (!act) return;
+  const p = cfg.prog[+t.closest('.prog').dataset.i];
+  if (act === 'hora' && t.value){ const [h,m] = t.value.split(':').map(Number); p.h = h; p.m = m; renderTimeline();
+    t.closest('.prog').querySelector('.frase').innerHTML = frase(p); }
+  if (act === 'ativo'){ p.a = t.checked ? 1 : 0; renderProgs(); }
+  marcar();
 });
 $('btnAdd').onclick = () => {
-  if (cfg.prog.length >= MAX_PROG) return;
   const ult = cfg.prog[cfg.prog.length-1];
-  cfg.prog.push({ h: ult ? (ult.h+6)%24 : 6, m: ult ? ult.m : 0, d: ult ? ult.d : 600, a: 1 });
+  cfg.prog.push(ult ? { h:(ult.h+6)%24, m:ult.m, d:ult.d, a:1, w:ult.w } : { h:6, m:0, d:600, a:1, w:127 });
   renderProgs(); marcar();
+  $('progs').lastElementChild.scrollIntoView({behavior:'smooth', block:'center'});
 };
-$('ativo').onchange = () => { cfg.ativo = $('ativo').checked; marcar(); };
-$('ajuste').oninput = () => { cfg.ajuste = +$('ajuste').value; $('ajusteVal').textContent = cfg.ajuste+'%'; marcar(); totalDia(); };
-$('maxMin').oninput = () => { cfg.max = Math.max(1, Math.round(+$('maxMin').value || 1)) * 60; marcar(); totalDia(); };
+$('ajuste').oninput = () => { cfg.ajuste = +$('ajuste').value; renderAjustes(); renderProgs(); marcar(); };
+document.querySelectorAll('[data-max]').forEach(b => b.onclick = () => {
+  cfg.max = passo(cfg.max, +b.dataset.max, 60); renderAjustes(); renderProgs(); marcar();
+});
 
-// ---------------- Escrita ----------------
-function validar(){
-  for (const p of cfg.prog) if (!(p.d >= 30)) return 'Cada horário precisa de pelo menos 0,5 min.';
-  const ch = cfg.prog.map(p => p.h*60+p.m);
-  if (new Set(ch).size !== ch.length) return 'Há dois horários iguais.';
-  if (cfg.ativo && cfg.prog.some(p=>p.a) && !cfg.dias) return 'Escolha pelo menos um dia da semana.';
-  const limitados = cfg.prog.filter(p => p.a && p.d*cfg.ajuste/100 > cfg.max);
-  if (limitados.length) toast('Atenção: algumas regas serão cortadas pela duração máxima.');
+// ===================== Salvar =====================
+function validar(c){
+  const hs = c.prog.map(p => p.h*60+p.m);
+  if (new Set(hs).size !== hs.length) return 'Há dois horários iguais.';
+  if (c.prog.some(p => p.a && !p.w)) return 'Todo horário ativo precisa de pelo menos um dia.';
   return null;
 }
-async function salvar(){
-  const erro = validar(); if (erro) { toast(erro); return; }
-  cfg.prog.sort((a,b) => (a.h*60+a.m) - (b.h*60+b.m));
+async function enviar(c, msg){
+  const erro = validar(c); if (erro){ toast(erro); return false; }
+  c.prog.sort((a,b) => (a.h*60+a.m) - (b.h*60+b.m));
   try{
-    await escrever(ch.cfg, JSON.stringify(cfg));
-    await espera(500);
-    await lerConfig(); await lerStatus();
-    toast('Configuração salva ✔');
-  }catch(e){ toast('Erro ao salvar: ' + e.message); }
+    await api.salvarConfig(c);
+    await espera(400);
+    cfg = normalizar(await api.lerConfig()); salvo = JSON.stringify(cfg);
+    await atualizarStatus();
+    renderTudo(); toast(msg || 'Salvo ✔');
+    return true;
+  }catch(e){ toast('Erro ao salvar: ' + e.message); return false; }
 }
-async function sincronizar(silencioso){
-  await escrever(ch.hora, String(agoraLocal()));
-  if (!silencioso) { await espera(300); await lerStatus(); toast('Relógio sincronizado ✔'); }
-}
-async function cmd(c){ try { await escrever(ch.cmd, c); await espera(300); await lerStatus(); } catch(e){ if (c!=='SLEEP') toast('Erro: '+e.message); } }
+$('btnSalvar').onclick = () => enviar(cfg);
+$('btnDescartar').onclick = () => { cfg = JSON.parse(salvo); renderTudo(); };
 
-$('btnSalvar').onclick = salvar;
-$('btnSync').onclick = () => sincronizar(false);
-$('btnRun').onclick  = () => cmd('RUN:' + Math.round((parseFloat($('manualMin').value)||1)*60));
-$('btnStop').onclick = () => cmd('STOP');
-$('btnPausa').onclick = () => { cfg.pausa = agoraLocal() + (+$('pausaDias').value)*86400; salvar(); };
-$('btnRetomar').onclick = () => { cfg.pausa = 0; salvar(); };
-$('btnDormir').onclick = async () => {
-  if (alterado && !confirm('Há alterações não salvas. Encerrar mesmo assim?')) return;
-  saindo = true;
-  await cmd('SLEEP');
+// ações imediatas: alteram só o que está salvo, sem levar edições pendentes
+async function acaoImediata(fn, msg){
+  const pend = alterado() ? cfg : null;
+  const base = JSON.parse(salvo); fn(base);
+  if (await enviar(base, msg) && pend){ fn(pend); cfg = pend; renderTudo(); }
+}
+$('ativo').onchange = e => { const v = e.target.checked; acaoImediata(c => c.ativo = v, v ? 'Irrigação automática ligada' : 'Irrigação automática desligada'); };
+document.querySelectorAll('[data-pausa]').forEach(b => b.onclick = () => {
+  const n = +b.dataset.pausa; acaoImediata(c => c.pausa = agoraLocal() + n*86400, `Pausado por ${b.textContent}`);
+});
+$('btnRetomar').onclick = () => acaoImediata(c => c.pausa = 0, 'Irrigação retomada');
+
+// ===================== Comandos =====================
+$('chipsManual').innerHTML = MANUAL_MIN.map(m => `<button class="chip" data-min="${m}">${m} min</button>`).join('');
+$('chipsManual').onclick = async e => {
+  const b = e.target.closest('[data-min]'); if (!b) return;
+  await api.cmd('RUN:' + (+b.dataset.min*60)); await espera(300); await atualizarStatus();
+  toast(`Regando ${b.dataset.min} min`);
 };
-// App instalável / funciona offline
-if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
+$('btnParar').onclick = async () => { await api.cmd('STOP'); await espera(300); await atualizarStatus(); };
+$('btnSync').onclick  = async () => { await api.hora(agoraLocal()); await espera(300); await atualizarStatus(); toast('Relógio acertado ✔'); };
+$('btnDormir').onclick = async () => {
+  if (alterado() && !confirm('Há alterações não salvas. Desligar mesmo assim?')) return;
+  saindo = true; try { await api.cmd('SLEEP'); } catch {}
+};
+$('btnDesc').onclick = () => { saindo = true; if (api === demo) aoDesconectar(); else ble.desconectar(); };
+$('btnCon').onclick = conectar;
 
-window.addEventListener('beforeunload', e => { if (alterado) { e.preventDefault(); e.returnValue=''; } });
+window.addEventListener('beforeunload', e => { if (alterado()) { e.preventDefault(); e.returnValue=''; } });
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
 </script>
 </body>
 </html>
