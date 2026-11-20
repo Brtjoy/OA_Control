@@ -215,7 +215,7 @@
     <ol>
       <li>Fique perto do controlador (até ~15 m).</li>
       <li>Toque em <b>Conectar</b>.</li>
-      <li>Escolha <b>Gota Azul</b> na lista.</li>
+      <li>Escolha <b>Gota Azul</b> na lista. Na primeira vez, este celular será cadastrado como <b>mestre</b>.</li>
     </ol>
     <button id="btnCon" class="btn full">Conectar</button>
     <p><button id="btnDemo" class="info" style="text-decoration:underline">Ver demonstração sem a placa</button></p>
@@ -330,7 +330,8 @@
           <div class="kv"><span>Versão</span><b id="fw">—</b></div>
           <div class="chips" style="margin-top:12px">
             <button id="btnSync" class="chip">Acertar relógio</button>
-            <button id="btnDesc" class="chip">Desconectar</button>
+            <button id="btnBle" class="chip hidden">Conectar por Bluetooth</button>
+            <button id="btnDesc" class="chip">Desconectar este celular</button>
           </div>
         </div>
     </section>
@@ -412,7 +413,7 @@
 <script>
 // ===================== Constantes =====================
 const BASE = '-3c4b-4e5a-9b1d-2f6c8a9e0b10';
-const UUID = { svc:'7a1f0001'+BASE, cfg:'7a1f0002'+BASE, hora:'7a1f0003'+BASE, cmd:'7a1f0004'+BASE, status:'7a1f0005'+BASE, wifi:'7a1f0006'+BASE, push:'7a1f0007'+BASE };
+const UUID = { svc:'7a1f0001'+BASE, cfg:'7a1f0002'+BASE, hora:'7a1f0003'+BASE, cmd:'7a1f0004'+BASE, status:'7a1f0005'+BASE, wifi:'7a1f0006'+BASE, push:'7a1f0007'+BASE, auth:'7a1f0008'+BASE };
 const DIAS = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
 const DIA_LONGO = ['domingo','segunda','terça','quarta','quinta','sexta','sábado'];
 const Cap = t => t.charAt(0).toUpperCase() + t.slice(1);
@@ -431,7 +432,7 @@ const pad = n => String(n).padStart(2,'0');
 const agoraLocal = () => Math.floor(Date.now()/1000) - new Date().getTimezoneOffset()*60;
 
 // ===================== Estado =====================
-let api = null;            // ble ou demo
+let api = null;            // ble, nuvem ou demo
 let cfg = null;            // configuração em edição
 let salvo = '';            // JSON da última configuração salva
 let st = null, stEm = 0;   // último status e quando chegou (ms)
@@ -484,6 +485,13 @@ function proximo(c, agora){
   return null;
 }
 
+// ===================== Sessão do celular mestre =====================
+// Guardada só neste celular: a chave secreta que o controlador entregou no cadastro.
+function sessao(){ try { return JSON.parse(localStorage.getItem('gota-sessao') || 'null'); } catch { return null; } }
+function salvarSessao(o){ try { localStorage.setItem('gota-sessao', JSON.stringify(o)); } catch {} }
+function apagarSessao(){ try { localStorage.removeItem('gota-sessao'); } catch {} }
+const temNuvem = () => { const s = sessao(); return !!(s && s.chave && s.nuvem); };
+
 // ===================== Bluetooth =====================
 const ble = {
   dev:null, ch:{}, fila:Promise.resolve(),
@@ -505,7 +513,7 @@ const ble = {
     const srv = await this.dev.gatt.connect();
     const s = await srv.getPrimaryService(UUID.svc);
     for (const k of ['cfg','hora','cmd','status']) this.ch[k] = await s.getCharacteristic(UUID[k]);
-    for (const k of ['wifi','push']) { try { this.ch[k] = await s.getCharacteristic(UUID[k]); } catch { this.ch[k] = null; } }  // firmware antigo
+    for (const k of ['wifi','push','auth']) { try { this.ch[k] = await s.getCharacteristic(UUID[k]); } catch { this.ch[k] = null; } }  // firmware antigo
   },
   desconectar(){ if (this.dev && this.dev.gatt.connected) this.dev.gatt.disconnect(); }
 };
@@ -530,6 +538,7 @@ async function conectar(){
     saindo = false;
     pill('wait','Conectando…');
     await ble.conectarGatt();
+    if (!(await autenticarBle())) { saindo = true; ble.desconectar(); pill('', 'Desconectado'); return; }
     api = ble;
     await iniciarSessao(true);
   }catch(e){
@@ -545,6 +554,32 @@ async function conectar(){
   }
 }
 
+// Identifica este celular como mestre (ou cadastra, se a placa permitir)
+async function autenticarBle(){
+  if (!ble.ch.auth) return true;                                  // firmware antigo, sem cadastro
+  const ler = async () => JSON.parse(await ble.ler('auth'));
+  let r = await ler();
+  const s = sessao();
+  if (s && s.chave) { await ble.esc('auth', s.chave); await espera(400); r = await ler(); }
+  if (!r.auth) {
+    if (!r.janela) {
+      mostrarErro('Este controlador já tem um <b>celular mestre</b>. Para cadastrar este celular no lugar dele, aperte <b>RESET</b> no controlador e toque em <b>Conectar</b> em até 5 minutos.');
+      return false;
+    }
+    const ok = await confirmar({ icone:'📱', titulo:'Cadastrar este celular como mestre?',
+      texto: r.temDono ? 'O celular mestre atual vai perder o acesso a este controlador.'
+                       : 'Só o celular mestre pode ver e alterar as regas — por Bluetooth ou pela internet — e receber os avisos.',
+      ok:'Cadastrar' });
+    if (!ok) return false;
+    await ble.esc('auth', 'PAIR'); await espera(600); r = await ler();
+    if (!r.auth || !r.chave) { mostrarErro('O cadastro não foi aceito. Aperte <b>RESET</b> no controlador e tente de novo em até 5 minutos.'); return false; }
+    salvarSessao({ chave: r.chave, nuvem: r.nuvem || '' });
+    lembrar('gota-avisos', null);
+    toast('Este celular agora é o mestre ✔');
+  } else if (s) salvarSessao({ ...s, nuvem: r.nuvem || s.nuvem || '' });
+  return true;
+}
+
 async function iniciarSessao(sincronizarHora){
   if (sincronizarHora) { await api.hora(agoraLocal()); await sincronizarInscricao(); }
   if (!alterado()) {
@@ -554,9 +589,9 @@ async function iniciarSessao(sincronizarHora){
   }
   await atualizarStatus();
   clearInterval(poll);
-  poll = setInterval(() => atualizarStatus().catch(()=>{}), 2000);
+  poll = setInterval(() => atualizarStatus().catch(()=>{}), api === nuvem ? 4000 : 2000);
   pushInfo = null;
-  pill('on', api === demo ? 'Demonstração' : 'Conectado');
+  pillConexao();
   $('demoTag').classList.toggle('hidden', api !== demo);
   $('telaInicial').classList.add('hidden');
   $('app').classList.remove('hidden');
@@ -569,12 +604,13 @@ async function aoDesconectar(){
   const hora = new Date().toLocaleTimeString('pt-BR');
   if (!saindo){
     reconectando = true;
-    for (let t = 1; t <= 5; t++){
-      pill('wait', `Reconectando ${t}/5…`);
+    for (let t = 1; t <= 3; t++){
+      pill('wait', `Reconectando ${t}/3…`);
       await espera(1500);
-      try { await ble.conectarGatt(); reconectando = false; await iniciarSessao(false); return; } catch(e) {}
+      try { await ble.conectarGatt(); if (await autenticarBle()) { reconectando = false; await iniciarSessao(false); return; } } catch(e) {}
     }
     reconectando = false;
+    if (temNuvem() && await conectarNuvem()) { toast('Longe do controlador: conectado pela internet'); return; }
   }
   pill('','Desconectado');
   $('app').classList.add('hidden');
@@ -585,7 +621,65 @@ async function aoDesconectar(){
 }
 
 function pill(cls, txt){ $('pill').className = 'pill ' + cls; $('pillTxt').textContent = txt; }
+const offline = () => api === nuvem && st && (agoraLocal() - st.agora) > 90;
+function pillConexao(){
+  if (api === demo) return pill('on', 'Demonstração');
+  if (api === ble)  return pill('on', 'Bluetooth');
+  if (api === nuvem) return offline() ? pill('wait', 'Controlador offline') : pill('on', 'Internet');
+}
 function mostrarErro(html){ const e=$('erro'); e.innerHTML=html; e.classList.remove('hidden'); }
+
+// ===================== Internet (Firebase Realtime Database) =====================
+const nuvem = {
+  base(){ const s = sessao(); return `${s.nuvem}/c/${s.chave}`; },
+  async req(metodo, caminho, corpo){
+    const r = await fetch(this.base() + caminho, { method: metodo, cache: 'no-store',
+      body: corpo === undefined ? undefined : JSON.stringify(corpo) });
+    if (!r.ok) throw new Error('internet ' + r.status);
+    return r.json();
+  },
+  async enviarComando(tipo, dados){
+    await this.req('POST', '/cmds.json', { t: tipo, d: dados });
+    for (let i = 0; i < 12; i++){                        // espera o controlador buscar (~3 s)
+      await espera(1500);
+      const fila = await this.req('GET', '/cmds.json?shallow=true');
+      if (!fila || !Object.keys(fila).length) return;
+    }
+    throw new Error('O controlador não respondeu. Ele está ligado e com internet?');
+  },
+  async lerConfig(){ const c = await this.req('GET', '/config.json'); if (!c) throw new Error('sem dados'); return c; },
+  async salvarConfig(o){
+    const alvo = JSON.stringify(normalizar(JSON.parse(JSON.stringify(o))).prog);
+    await this.enviarComando('cfg', JSON.stringify(o));
+    for (let i = 0; i < 8; i++){                         // espera a configuração nova aparecer
+      const c = await this.lerConfig().catch(() => null);
+      if (c && JSON.stringify(normalizar(c).prog) === alvo) return;
+      await espera(1500);
+    }
+  },
+  async lerStatus(){ const s = await this.req('GET', '/status.json'); if (!s) throw new Error('sem dados'); return s; },
+  async cmd(c){ await this.enviarComando('cmd', c); await espera(3500); },
+  async hora(){},
+  async lerWifi(){ return { redes: [] }; },
+  async salvarWifi(){ throw new Error('Para trocar o Wi-Fi, conecte por Bluetooth perto do controlador.'); },
+  async lerPush(){ return await this.req('GET', '/push.json'); },
+  inscrever(sub){ return this.enviarComando('push', JSON.stringify(sub)); },
+  removerInscricao(endpoint){ return this.enviarComando('push', JSON.stringify({ remover: endpoint })); }
+};
+
+async function conectarNuvem(){
+  if (!temNuvem()) return false;
+  pill('wait', 'Conectando pela internet…');
+  try {
+    api = nuvem; saindo = false;
+    await iniciarSessao(false);
+    return true;
+  } catch (e) {
+    api = null; pill('', 'Desconectado');
+    mostrarErro('Este celular é o mestre, mas o controlador ainda não respondeu pela internet. Se estiver perto dele, toque em <b>Conectar</b> (Bluetooth) e confira o Wi-Fi em Ajustes.');
+    return false;
+  }
+}
 
 // ===================== Demonstração (sem placa) =====================
 const demo = window.demo = {
@@ -630,9 +724,10 @@ $('btnDemo').onclick = () => { api = demo; saindo = false; iniciarSessao(false);
 async function atualizarStatus(){
   try { st = await api.lerStatus(); stEm = Date.now(); } catch { return; }
   if (api === ble && st.rtcOk && Math.abs(st.agora - agoraLocal()) > 120) api.hora(agoraLocal());
-  renderHero(); renderControlador(); renderTimeline(); renderWifi(); renderAvisosNota();
+  renderHero(); renderControlador(); renderTimeline(); renderWifi(); renderAvisosNota(); pillConexao();
 }
-const passou = () => st ? Math.floor((Date.now() - stEm)/1000) : 0;
+// segundos desde a leitura do estado (pela internet o estado pode ter alguns segundos)
+const passou = () => !st ? 0 : api === nuvem ? Math.max(0, agoraLocal() - st.agora) : Math.floor((Date.now() - stEm)/1000);
 
 function renderHero(){
   if (!st || !cfg) return;
@@ -642,6 +737,14 @@ function renderHero(){
   $('heroBarra').classList.add('hidden'); $('btnParar').classList.add('hidden'); $('btnRetomar').classList.add('hidden');
   $('ativo').checked = !!salvoCfg.ativo;
 
+  if (offline()){
+    h.classList.add('pausa');
+    $('heroRot').textContent = 'Sem contato com o controlador';
+    $('heroGrande').textContent = 'Offline';
+    const vis = dataUTC(st.agora);
+    $('heroSub').textContent = `Último contato: ${fmtQuando(st.agora, agoraLocal())}. Ele pode estar sem energia ou sem internet; as regas programadas continuam normalmente.`;
+    return;
+  }
   if (st.rtcAus || !st.rtcOk){
     $('heroRot').textContent = 'Atenção';
     $('heroGrande').textContent = st.rtcAus ? 'RTC não encontrado' : 'Relógio não ajustado';
@@ -692,6 +795,8 @@ function renderControlador(){
   $('hora').textContent = st.rtcOk ? dataUTC(agora).toLocaleString('pt-BR',{timeZone:'UTC',weekday:'long',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit'}) : 'não ajustado';
   $('ult').textContent = st.ult ? `${fmtQuando(st.ult, agora)} · ${fmtDur(st.ultDur)}` : '—';
   $('fw').textContent = st.fw || '—';
+  $('btnBle').classList.toggle('hidden', api !== nuvem);
+  $('btnSync').classList.toggle('hidden', api === nuvem);
 }
 
 // ===================== Configuração =====================
@@ -897,12 +1002,24 @@ $('btnRetomar').onclick = () => acaoImediata(c => c.pausa = 0, 'Irrigação reto
 $('chipsManual').innerHTML = MANUAL_MIN.map(m => `<button class="chip" data-min="${m}">${m} min</button>`).join('');
 $('chipsManual').onclick = async e => {
   const b = e.target.closest('[data-min]'); if (!b) return;
-  await api.cmd('RUN:' + (+b.dataset.min*60)); await espera(300); await atualizarStatus();
+  if (api === nuvem) toast('Enviando pela internet…');
+  try { await api.cmd('RUN:' + (+b.dataset.min*60)); } catch (er) { toast(er.message); return; } await espera(300); await atualizarStatus();
   toast(`Regando ${b.dataset.min} min`);
 };
 $('btnParar').onclick = async () => { await api.cmd('STOP'); await espera(300); await atualizarStatus(); };
 $('btnSync').onclick  = async () => { await api.hora(agoraLocal()); await espera(300); await atualizarStatus(); toast('Relógio acertado ✔'); };
-$('btnDesc').onclick = () => { saindo = true; if (api === demo) aoDesconectar(); else ble.desconectar(); };
+$('btnDesc').onclick = async () => {
+  if (api === demo) { saindo = true; return aoDesconectar(); }
+  const ok = await confirmar({ icone:'📱', titulo:'Desconectar este celular?',
+    texto:'Ele deixa de ser o celular mestre: não vê mais as regas, não altera nada e não recebe avisos. Para voltar, conecte por Bluetooth perto do controlador.',
+    ok:'Desconectar', perigo:true });
+  if (!ok) return;
+  try { await api.cmd('SAIR'); } catch {}
+  try { const sub = await minhaInscricao(); if (sub) await sub.unsubscribe(); } catch {}
+  apagarSessao(); lembrar('gota-avisos', null);
+  saindo = true;
+  if (api === ble) ble.desconectar(); else aoDesconectar();
+};
 $('btnCon').onclick = conectar;
 
 
@@ -963,7 +1080,7 @@ document.querySelectorAll('[data-fechar]').forEach(b => b.onclick = fecharSheets
 const esc = t => String(t).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const qualidade = r => r >= -55 ? 'ótimo' : r >= -67 ? 'bom' : r >= -75 ? 'fraco' : 'muito fraco';
 const barras = r => `<span class="barras b${r >= -55 ? 4 : r >= -67 ? 3 : r >= -75 ? 2 : 1}"><i></i><i></i><i></i><i></i></span>`;
-const temRecurso = k => api === demo || !!(ble.ch && ble.ch[k]);
+const temRecurso = k => api === demo || api === nuvem || !!(ble.ch && ble.ch[k]);
 
 function renderWifi(){
   const ic = $('wfIc'); ic.className = 'ic';
@@ -1025,7 +1142,8 @@ $('btnEsquecer').onclick = async () => {
   if (!await confirmar({ icone:'📶', titulo:'Desligar o Wi-Fi?', texto:'O controlador continua regando normalmente, mas os avisos param de chegar no celular.', ok:'Desligar', perigo:true })) return;
   await api.salvarWifi({ ssid:'', pass:'' }); fecharSheets(); await espera(500); await atualizarStatus();
 };
-$('btnWifi').onclick = () => { $('wfPasso2').classList.add('hidden'); $('wfPasso1').classList.remove('hidden'); abrirSheet('sheetWifi'); procurarRedes(); };
+$('btnWifi').onclick = () => {
+  if (api === nuvem) { toast('Para trocar o Wi-Fi, fique perto do controlador e conecte por Bluetooth.'); return; } $('wfPasso2').classList.add('hidden'); $('wfPasso1').classList.remove('hidden'); abrirSheet('sheetWifi'); procurarRedes(); };
 
 // ===================== Avisos (Web Push) =====================
 const suportaPush = 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
@@ -1054,7 +1172,7 @@ async function renderAvisos(){
   const n = pushInfo ? pushInfo.n : 0;
   if (ativo){
     ic.classList.add('ok');
-    mostrar('Avisos ativos neste celular', `${n} celular${n > 1 ? 'es recebem' : ' recebe'} os avisos deste controlador.`, false, true);
+    mostrar('Avisos ativos neste celular', 'Você recebe um aviso a cada rega, mesmo longe da propriedade.', false, true);
   } else if (api !== demo && Notification.permission === 'denied'){
     ic.classList.add('erro');
     mostrar('Notificações bloqueadas', 'Libere em Chrome → Configurações → Notificações → brtjoy.github.io.', false, false);
@@ -1145,6 +1263,10 @@ function irAba(nome){
 document.querySelectorAll('nav.abas [data-ir]').forEach(b => b.onclick = () => irAba(b.dataset.ir));
 
 window.addEventListener('beforeunload', e => { if (alterado()) { e.preventDefault(); e.returnValue=''; } });
+$('btnBle').onclick = () => conectar();
+// abre direto pela internet se este celular já é o mestre
+if (temNuvem()) conectarNuvem();
+
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).catch(()=>{});
 </script>
 </body>
