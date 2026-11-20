@@ -649,7 +649,7 @@ $('btnDesc').onclick = () => { saindo = true; if (api === demo) aoDesconectar();
 $('btnCon').onclick = conectar;
 
 window.addEventListener('beforeunload', e => { if (alterado()) { e.preventDefault(); e.returnValue=''; } });
-if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).catch(()=>{});
 </script>
 </body>
 </html>
