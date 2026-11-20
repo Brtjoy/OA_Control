@@ -178,6 +178,12 @@
   .campo:focus{outline:none;border-color:var(--az)}
   .opcao{display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px dashed var(--bd)}
   .opcao:last-child{border-bottom:0}
+  /* confirmação */
+  .conf-ic{width:56px;height:56px;border-radius:16px;margin:4px auto 10px;display:flex;align-items:center;justify-content:center;font-size:1.6rem;background:var(--az-cl)}
+  .conf-ic.perigo{background:#fdecea}
+  .conf-tit{text-align:center;margin:0 0 6px;font-size:1.15rem}
+  .conf-txt{text-align:center;color:var(--mu);margin:0 0 18px;font-size:.95rem;line-height:1.4}
+  .btn.forte{background:var(--vm);color:#fff}
   .demo-tag{background:#ffd54f;color:#5d4300;font-size:.7rem;font-weight:700;padding:3px 8px;border-radius:10px}
 </style>
 </head>
@@ -310,6 +316,19 @@
   <button id="btnSalvar" class="btn">Salvar</button>
 </div>
 <div id="toast"></div>
+
+<div id="sheetConf" class="sheet hidden">
+  <div class="sheet-fundo" data-conf="0"></div>
+  <div class="sheet-painel">
+    <div class="conf-ic" id="confIc">⚠️</div>
+    <h3 class="conf-tit" id="confTit"></h3>
+    <p class="conf-txt" id="confTxt"></p>
+    <div class="sheet-acoes">
+      <button class="btn sec" data-conf="0">Cancelar</button>
+      <button class="btn" id="confOk" data-conf="1">Confirmar</button>
+    </div>
+  </div>
+</div>
 
 <div id="sheetHora" class="sheet hidden">
   <div class="sheet-fundo" data-fechar></div>
@@ -711,7 +730,11 @@ $('progs').addEventListener('click', e => {
     case 'dia':   p.w ^= 1 << +b.dataset.d; break;
     case 'w':     p.w = +b.dataset.w; break;
     case 'hora':  abrirRelogio(p.h, p.m, (h,m) => { p.h = h; p.m = m; renderProgs(); marcar(); }, i); return;
-    case 'rm':    if (!confirm(`Remover o horário das ${pad(p.h)}:${pad(p.m)}?`)) return; cfg.prog.splice(i,1); break;
+    case 'rm':
+      confirmar({ icone:'🗑️', titulo:`Remover o horário das ${pad(p.h)}:${pad(p.m)}?`,
+                  texto:`Rega de ${fmtDur(p.d)} · ${descDias(p.w)}. A mudança só vale depois de salvar.`, ok:'Remover', perigo:true })
+        .then(ok => { if (ok) { cfg.prog.splice(i,1); renderProgs(); marcar(); } });
+      return;
     default: return;
   }
   renderProgs(); marcar();
@@ -818,6 +841,16 @@ $('btnHoraOk').onclick = () => {
   if (conflita(h,m)) { toast('Já existe um horário igual'); return; }
   fecharSheets(); if (relogioCb) relogioCb(h, m);
 };
+// Janela de confirmação no estilo do app (substitui o confirm() do navegador)
+function confirmar({ titulo, texto = '', ok = 'Confirmar', perigo = false, icone = '⚠️' }){
+  return new Promise(resolve => {
+    $('confTit').textContent = titulo; $('confTxt').textContent = texto;
+    $('confIc').textContent = icone; $('confIc').className = 'conf-ic' + (perigo ? ' perigo' : '');
+    $('confOk').textContent = ok; $('confOk').className = 'btn' + (perigo ? ' forte' : '');
+    abrirSheet('sheetConf');
+    document.querySelectorAll('[data-conf]').forEach(b => b.onclick = () => { fecharSheets(); resolve(b.dataset.conf === '1'); });
+  });
+}
 function abrirSheet(id){ $(id).classList.remove('hidden'); document.body.style.overflow = 'hidden'; }
 function fecharSheets(){ document.querySelectorAll('.sheet').forEach(x => x.classList.add('hidden')); document.body.style.overflow = ''; }
 document.querySelectorAll('[data-fechar]').forEach(b => b.onclick = fecharSheets);
@@ -885,7 +918,7 @@ $('wfMostrar').onchange = e => $('wfSenha').type = e.target.checked ? 'text' : '
 $('btnVoltarRedes').onclick = () => { $('wfPasso2').classList.add('hidden'); $('wfPasso1').classList.remove('hidden'); };
 $('btnProcurar').onclick = procurarRedes;
 $('btnEsquecer').onclick = async () => {
-  if (!confirm('Desligar o Wi-Fi do controlador? Os avisos param de chegar.')) return;
+  if (!await confirmar({ icone:'📶', titulo:'Desligar o Wi-Fi?', texto:'O controlador continua regando normalmente, mas os avisos param de chegar no celular.', ok:'Desligar', perigo:true })) return;
   await api.salvarWifi({ ssid:'', pass:'' }); fecharSheets(); await espera(500); await atualizarStatus();
 };
 $('btnWifi').onclick = () => { $('wfPasso2').classList.add('hidden'); $('wfPasso1').classList.remove('hidden'); abrirSheet('sheetWifi'); procurarRedes(); };
@@ -961,7 +994,7 @@ async function mostrarNotificacaoLocal(t, b){
 $('btnAvisos').onclick = ativarAvisos;
 $('btnTeste').onclick = async () => { await api.cmd('TESTE'); toast(api === demo ? 'Aviso de teste enviado' : 'Aviso enviado. Deve chegar em alguns segundos.'); };
 $('btnLimparAv').onclick = async () => {
-  if (!confirm('Parar de enviar avisos para TODOS os celulares cadastrados?')) return;
+  if (!await confirmar({ icone:'🔕', titulo:'Remover todos os celulares?', texto:'Nenhum celular vai receber avisos até que sejam ativados de novo em cada um.', ok:'Remover todos', perigo:true })) return;
   await api.cmd('PUSHCLEAR');
   try { const sub = await minhaInscricao(); if (sub) await sub.unsubscribe(); } catch {}
   pushInfo = null; await espera(400); renderAvisos();
