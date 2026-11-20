@@ -1,6 +1,6 @@
 // Service worker: guarda a página no celular para abrir sem internet.
 // Ao publicar uma versão nova da página, aumente o número abaixo.
-const CACHE = 'irrigador-v1';
+const CACHE = 'irrigador-v2';
 const ARQUIVOS = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', e => {

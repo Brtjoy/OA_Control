@@ -57,7 +57,7 @@
   <button id="btnCon">Conectar</button>
 </header>
 
-<div id="aviso" class="aviso">Aperte o botão <b>EN/RESET</b> do controlador para ativar o Bluetooth (fica ativo por 10 min) e toque em <b>Conectar</b>.</div>
+<div id="aviso" class="aviso">Aperte o botão <b>RESET</b> do controlador para ativar o Bluetooth (fica ativo por 10 min) e toque em <b>Conectar</b>.</div>
 
 <main id="app" class="desab">
   <section class="card">
@@ -66,6 +66,7 @@
     <div class="linha"><span>Próxima rega</span><b id="prox">—</b></div>
     <div class="linha"><span>Última rega</span><b id="ult">—</b></div>
     <div class="linha"><span>Pausa</span><b id="pausaTxt">—</b></div>
+    <div class="linha"><span>Diagnóstico</span><b id="diag" style="text-align:right">—</b></div>
     <div id="regandoBox" class="regando hidden">💦 Regando… faltam <span id="resta"></span></div>
     <div class="acoes">
       <input id="manualMin" type="number" min="0.5" max="120" step="0.5" value="1"> min
@@ -153,6 +154,7 @@ function aviso(t){ const e=$('aviso'); if(!t){e.classList.add('hidden');return;}
 function marcar(v=true){ alterado=v; const b=$('btnSalvar'); b.classList.toggle('pend',v); b.textContent = v ? 'Salvar configuração •' : 'Salvar configuração'; }
 
 // ---------------- Conexão ----------------
+let saindo = false;
 async function conectar(){
   if (!navigator.bluetooth){
     aviso('Este navegador não tem Web Bluetooth. Use o <b>Chrome</b> (Android ou computador). No iPhone, use o app <b>Bluefy</b>. A página precisa estar em <b>https://</b>.');
@@ -161,31 +163,50 @@ async function conectar(){
   try{
     dev = await navigator.bluetooth.requestDevice({ filters:[{namePrefix:'Irrigador'}], optionalServices:[UUID.svc] });
     dev.addEventListener('gattserverdisconnected', aoDesconectar);
-    $('estado').textContent = 'Conectando…';
-    const srv = await dev.gatt.connect();
-    const s = await srv.getPrimaryService(UUID.svc);
-    for (const k of ['cfg','hora','cmd','status']) ch[k] = await s.getCharacteristic(UUID[k]);
-    await sincronizar(true);
-    await lerConfig();
-    await lerStatus();
-    poll = setInterval(() => lerStatus().catch(()=>{}), 2000);
-    $('estado').textContent = 'Conectado';
-    $('btnCon').textContent = 'Desconectar';
-    $('app').classList.remove('desab');
-    aviso(null);
+    saindo = false;
+    await conectarGatt();
   }catch(e){
     $('estado').textContent = 'Desconectado';
     if (e.name !== 'NotFoundError') aviso('Não foi possível conectar: ' + e.message);
   }
 }
-function aoDesconectar(){
+async function conectarGatt(){
+  $('estado').textContent = 'Conectando…';
+  fila = Promise.resolve();
+  const srv = await dev.gatt.connect();
+  const s = await srv.getPrimaryService(UUID.svc);
+  for (const k of ['cfg','hora','cmd','status']) ch[k] = await s.getCharacteristic(UUID[k]);
+  await sincronizar(true);
+  if (!alterado) await lerConfig();      // não apaga o que você estava editando
+  await lerStatus();
+  clearInterval(poll);
+  poll = setInterval(() => lerStatus().catch(()=>{}), 2000);
+  $('estado').textContent = 'Conectado';
+  $('btnCon').textContent = 'Desconectar';
+  $('app').classList.remove('desab');
+  aviso(null);
+}
+let reconectando = false;
+async function aoDesconectar(){
+  if (reconectando) return;          // evento repetido durante a reconexão
   clearInterval(poll); poll = null;
+  const hora = new Date().toLocaleTimeString('pt-BR');
+  if (!saindo){
+    reconectando = true;
+    for (let t = 1; t <= 5; t++){
+      $('estado').textContent = `Reconectando (${t}/5)…`;
+      await espera(1500);
+      try { await conectarGatt(); reconectando = false; return; } catch(e) {}
+    }
+    reconectando = false;
+  }
   $('estado').textContent = 'Desconectado';
   $('btnCon').textContent = 'Conectar';
   $('app').classList.add('desab');
-  aviso('Desconectado. Para configurar de novo, aperte <b>EN/RESET</b> no controlador e toque em <b>Conectar</b>.');
+  aviso(saindo ? 'Desconectado.' :
+    `A conexão caiu às ${hora} e não voltou. Aperte <b>RESET</b> no controlador e toque em <b>Conectar</b>.`);
 }
-$('btnCon').onclick = () => (dev && dev.gatt.connected) ? dev.gatt.disconnect() : conectar();
+$('btnCon').onclick = () => { if (dev && dev.gatt.connected) { saindo = true; dev.gatt.disconnect(); } else conectar(); };
 
 // ---------------- Leitura ----------------
 async function lerConfig(){
@@ -203,6 +224,7 @@ async function lerStatus(){
   $('pausaTxt').textContent = (s.pausa && s.pausa > s.agora) ? 'até ' + fmt(s.pausa) : 'não';
   $('regandoBox').classList.toggle('hidden', !s.regando);
   $('resta').textContent = fmtDur(s.resta);
+  $('diag').textContent = `boot #${s.boots ?? '?'} · ${s.reset ?? '?'} · ligado há ${fmtDur(s.up)}`;
   if (s.rtcOk && Math.abs(s.agora - agoraLocal()) > 120) sincronizar(true);
 }
 
@@ -305,6 +327,7 @@ $('btnPausa').onclick = () => { cfg.pausa = agoraLocal() + (+$('pausaDias').valu
 $('btnRetomar').onclick = () => { cfg.pausa = 0; salvar(); };
 $('btnDormir').onclick = async () => {
   if (alterado && !confirm('Há alterações não salvas. Encerrar mesmo assim?')) return;
+  saindo = true;
   await cmd('SLEEP');
 };
 // App instalável / funciona offline
