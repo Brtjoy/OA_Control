@@ -169,7 +169,11 @@
   .rede{display:flex;align-items:center;gap:10px;width:100%;padding:13px 6px;border-bottom:1px solid var(--bd);text-align:left}
   .rede:active{background:#f4f7fa}
   .rede span:first-child{flex:1;font-weight:600}
-  .sinal{font-size:.8rem;color:var(--mu)}
+  .sinal{display:flex;align-items:center;gap:6px;font-size:.75rem;color:var(--mu)}
+  .barras{display:inline-flex;align-items:flex-end;gap:2px;height:11px}
+  .barras i{width:3px;border-radius:1px;background:#d3dae2}
+  .barras i:nth-child(1){height:3px} .barras i:nth-child(2){height:5px} .barras i:nth-child(3){height:8px} .barras i:nth-child(4){height:11px}
+  .barras.b1 i:nth-child(-n+1),.barras.b2 i:nth-child(-n+2),.barras.b3 i:nth-child(-n+3),.barras.b4 i{background:var(--az)}
   .campo{width:100%;padding:13px 12px;border:1.5px solid var(--bd);border-radius:12px;font-size:1rem;margin:6px 0 12px}
   .campo:focus{outline:none;border-color:var(--az)}
   .opcao{display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px dashed var(--bd)}
@@ -289,7 +293,6 @@
         <div style="margin-top:10px">
           <div class="kv"><span>Relógio</span><b id="hora">—</b></div>
           <div class="kv"><span>Última rega</span><b id="ult">—</b></div>
-          <div class="kv"><span>Diagnóstico</span><b id="diag">—</b></div>
           <div class="kv"><span>Firmware</span><b id="fw">—</b></div>
           <div class="chips" style="margin-top:12px">
             <button id="btnSync" class="chip">Acertar relógio</button>
@@ -607,7 +610,6 @@ function renderControlador(){
   const agora = st.agora + passou();
   $('hora').textContent = st.rtcOk ? dataUTC(agora).toLocaleString('pt-BR',{timeZone:'UTC',weekday:'short',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit'}) : 'não ajustado';
   $('ult').textContent = st.ult ? `${fmtQuando(st.ult, agora)} · ${fmtDur(st.ultDur)}` : '—';
-  $('diag').textContent = `boot #${st.boots ?? '?'} · ${st.reset ?? '?'} · ligado há ${fmtDur(st.up)}`;
   $('fw').textContent = st.fw || '—';
 }
 
@@ -823,7 +825,7 @@ document.querySelectorAll('[data-fechar]').forEach(b => b.onclick = fecharSheets
 // ===================== Wi-Fi =====================
 const esc = t => String(t).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const qualidade = r => r >= -55 ? 'ótimo' : r >= -67 ? 'bom' : r >= -75 ? 'fraco' : 'muito fraco';
-const barras = r => r >= -55 ? '▂▄▆█' : r >= -67 ? '▂▄▆' : r >= -75 ? '▂▄' : '▂';
+const barras = r => `<span class="barras b${r >= -55 ? 4 : r >= -67 ? 3 : r >= -75 ? 2 : 1}"><i></i><i></i><i></i><i></i></span>`;
 const temRecurso = k => api === demo || !!(ble.ch && ble.ch[k]);
 
 function renderWifi(){
@@ -856,7 +858,7 @@ async function procurarRedes(){
 function mostrarRedes(redes){
   redes.sort((a,b) => b.r - a.r);
   $('listaRedes').innerHTML = redes.map(r => `<button class="rede" data-s="${esc(r.s)}" data-l="${r.l?1:0}">
-      <span>${esc(r.s)}</span><span class="sinal">${r.l ? '🔒 ' : ''}${barras(r.r)}</span></button>`).join('');
+      <span>${esc(r.s)}</span><span class="sinal">${r.l ? '🔒' : ''}${barras(r.r)}</span></button>`).join('');
 }
 $('listaRedes').onclick = e => {
   const b = e.target.closest('.rede'); if (!b) return;
