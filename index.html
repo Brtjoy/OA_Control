@@ -138,6 +138,7 @@
 
   /* folha inferior (seletor) */
   .sheet{position:fixed;inset:0;z-index:40;display:flex;align-items:flex-end;justify-content:center}
+  .sheet-topo{z-index:50}
   .sheet-fundo{position:absolute;inset:0;background:rgba(10,25,40,.45);animation:fade .2s}
   .sheet-painel{position:relative;width:100%;max-width:560px;background:#fff;border-radius:22px 22px 0 0;padding:10px 18px calc(18px + env(safe-area-inset-bottom));animation:sobe .25s cubic-bezier(.2,.9,.3,1)}
   .sheet-painel::before{content:"";display:block;width:40px;height:5px;border-radius:3px;background:#d5dce4;margin:0 auto 12px}
@@ -351,7 +352,7 @@
 </div>
 <div id="toast"></div>
 
-<div id="sheetConf" class="sheet hidden">
+<div id="sheetConf" class="sheet sheet-topo hidden">
   <div class="sheet-fundo" data-conf="0"></div>
   <div class="sheet-painel">
     <div class="conf-ic" id="confIc">⚠️</div>
@@ -931,11 +932,15 @@ function confirmar({ titulo, texto = '', ok = 'Confirmar', perigo = false, icone
     $('confIc').textContent = icone; $('confIc').className = 'conf-ic' + (perigo ? ' perigo' : '');
     $('confOk').textContent = ok; $('confOk').className = 'btn' + (perigo ? ' forte' : '');
     abrirSheet('sheetConf');
-    document.querySelectorAll('[data-conf]').forEach(b => b.onclick = () => { fecharSheets(); resolve(b.dataset.conf === '1'); });
+    document.querySelectorAll('[data-conf]').forEach(b => b.onclick = () => { fecharSheet('sheetConf'); resolve(b.dataset.conf === '1'); });
   });
 }
 function abrirSheet(id){ $(id).classList.remove('hidden'); document.body.style.overflow = 'hidden'; }
 function fecharSheets(){ document.querySelectorAll('.sheet').forEach(x => x.classList.add('hidden')); document.body.style.overflow = ''; }
+function fecharSheet(id){
+  $(id).classList.add('hidden');
+  if (!document.querySelector('.sheet:not(.hidden)')) document.body.style.overflow = '';
+}
 document.querySelectorAll('[data-fechar]').forEach(b => b.onclick = fecharSheets);
 
 // ===================== Wi-Fi =====================
