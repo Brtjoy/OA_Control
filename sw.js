@@ -2,7 +2,7 @@
 // - Página: busca na internet primeiro; sem internet usa a cópia salva.
 // - Recebe os avisos (Web Push) enviados pelo controlador e mostra a notificação.
 // Ao publicar uma versão nova, aumente o número abaixo.
-const CACHE = 'gota-azul-v4';
+const CACHE = 'gota-azul-v5';
 const ARQUIVOS = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png', './icon-maskable-512.png', './badge.png'];
 
 self.addEventListener('install', e => {

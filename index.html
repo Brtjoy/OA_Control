@@ -184,6 +184,7 @@
   .conf-tit{text-align:center;margin:0 0 6px;font-size:1.15rem}
   .conf-txt{text-align:center;color:var(--mu);margin:0 0 18px;font-size:.95rem;line-height:1.4}
   .btn.forte{background:var(--vm);color:#fff}
+  .link{color:var(--az);font-size:.85rem;text-decoration:underline;padding:10px 0 2px;text-align:left}
   .demo-tag{background:#ffd54f;color:#5d4300;font-size:.7rem;font-weight:700;padding:3px 8px;border-radius:10px}
 </style>
 </head>
@@ -287,8 +288,9 @@
         <div class="opcao"><span>Rega iniciada</span><label class="sw peq"><input type="checkbox" data-av="1"><span class="tr"></span></label></div>
         <div class="opcao"><span>Rega concluída / interrompida</span><label class="sw peq"><input type="checkbox" data-av="2"><span class="tr"></span></label></div>
         <div class="opcao"><span>Falta de energia e problemas</span><label class="sw peq"><input type="checkbox" data-av="4"><span class="tr"></span></label></div>
-        <div class="chips" style="margin-top:12px"><button id="btnTeste" class="chip">Enviar aviso de teste</button><button id="btnRefazer" class="chip">Refazer inscrição</button><button id="btnLimparAv" class="chip">Remover todos os celulares</button></div>
+        <div class="chips" style="margin-top:12px"><button id="btnTeste" class="chip">Enviar aviso de teste</button><button id="btnLimparAv" class="chip">Remover todos os celulares</button></div>
       </div>
+      <button id="btnRefazer" class="link hidden">Não está recebendo avisos? Toque aqui para reativar</button>
       <p class="info" id="avNota" style="margin-bottom:0">Os avisos precisam do controlador conectado ao Wi-Fi da propriedade.</p>
     </section>
 
@@ -489,7 +491,7 @@ async function conectar(){
 }
 
 async function iniciarSessao(sincronizarHora){
-  if (sincronizarHora) await api.hora(agoraLocal());
+  if (sincronizarHora) { await api.hora(agoraLocal()); await sincronizarInscricao(); }
   if (!alterado()) { cfg = normalizar(await api.lerConfig()); salvo = JSON.stringify(cfg); }
   await atualizarStatus();
   clearInterval(poll);
@@ -941,6 +943,7 @@ async function renderAvisos(){
   const mostrar = (tit, sub, botao, opcoes) => {
     $('avTit').textContent = tit; $('avSub').textContent = sub;
     $('btnAvisos').classList.toggle('hidden', !botao); $('avOpcoes').classList.toggle('hidden', !opcoes);
+    $('btnRefazer').classList.toggle('hidden', !opcoes);
   };
   if (!temRecurso('push')) { mostrar('Indisponível', 'Atualize o controlador para o firmware 2.0.', false, false); return; }
   if (api !== demo && !suportaPush) { mostrar('Não suportado', 'Use o Chrome no Android, com o app instalado.', false, false); return; }
@@ -966,6 +969,26 @@ function renderAvisosNota(){
     ? '⚠ O controlador está sem internet. Os avisos ficam guardados (até 10) e saem quando a conexão voltar.'
     : `Avisos enviados pela internet da propriedade${st.fila ? ` · ${st.fila} na fila` : ''}.`;
 }
+const lembrar = (k, v) => { try { v === null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch {} };
+const lembrado = k => { try { return localStorage.getItem(k); } catch { return null; } };
+
+// Ao conectar: garante que o controlador tem a inscrição deste celular (sem perguntar nada)
+async function sincronizarInscricao(){
+  if (api === demo || !suportaPush || !temRecurso('push') || Notification.permission !== 'granted') return;
+  try {
+    const info = await api.lerPush();
+    const reg = await navigator.serviceWorker.ready;
+    let sub = await reg.pushManager.getSubscription();
+    const chave = sub && sub.options.applicationServerKey ? u8b64(sub.options.applicationServerKey) : '';
+    if (sub && chave === info.k) { await api.inscrever(sub.toJSON()); return; }       // reenvia (não duplica)
+    if (lembrado('gota-avisos') === '1') {                                           // tinha ativado: cria de novo
+      if (sub) await sub.unsubscribe();
+      sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64u8(info.k) });
+      await api.inscrever(sub.toJSON());
+    }
+  } catch {}
+}
+
 async function ativarAvisos(){
   if (api === demo){
     if ('Notification' in window) await Notification.requestPermission();
@@ -981,6 +1004,7 @@ async function ativarAvisos(){
     if (velha) { try { await velha.unsubscribe(); } catch {} }
     const sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64u8(info.k) });
     await api.inscrever(sub.toJSON());
+    lembrar('gota-avisos', '1');
     await espera(600); pushInfo = null; await renderAvisos();
     toast('Avisos ativados ✔');
   } catch(e) { toast('Não foi possível ativar: ' + e.message); }
@@ -999,6 +1023,7 @@ $('btnLimparAv').onclick = async () => {
   if (!await confirmar({ icone:'🔕', titulo:'Remover todos os celulares?', texto:'Nenhum celular vai receber avisos até que sejam ativados de novo em cada um.', ok:'Remover todos', perigo:true })) return;
   await api.cmd('PUSHCLEAR');
   try { const sub = await minhaInscricao(); if (sub) await sub.unsubscribe(); } catch {}
+  lembrar('gota-avisos', null);
   pushInfo = null; await espera(400); renderAvisos();
 };
 document.querySelectorAll('[data-av]').forEach(x => x.onchange = () => {
