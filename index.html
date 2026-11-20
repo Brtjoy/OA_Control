@@ -1,0 +1,309 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Irrigador</title>
+<style>
+  :root{--az:#1769aa;--az2:#e8f1f9;--vd:#2e7d32;--tx:#1d2733;--mu:#6b7785;--bd:#dde3ea;--bg:#f4f7fa}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--tx)}
+  header{position:sticky;top:0;z-index:5;background:var(--az);color:#fff;padding:12px 16px;display:flex;align-items:center;gap:12px}
+  header h1{font-size:1.15rem;margin:0;flex:1}
+  #estado{font-size:.8rem;opacity:.85}
+  main{max-width:560px;margin:0 auto;padding:12px}
+  main.desab{opacity:.45;pointer-events:none}
+  .card{background:#fff;border:1px solid var(--bd);border-radius:12px;padding:14px 16px;margin-bottom:12px}
+  h2{font-size:1rem;margin:0 0 10px}
+  h3{font-size:.85rem;margin:14px 0 6px;color:var(--mu);font-weight:600;text-transform:uppercase;letter-spacing:.03em}
+  .linha{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px dashed var(--bd);font-size:.92rem}
+  .linha:last-of-type{border-bottom:0}
+  .linha span{color:var(--mu)}
+  button{font:inherit;border:0;border-radius:8px;padding:9px 14px;background:var(--az);color:#fff;cursor:pointer}
+  button.sec{background:var(--az2);color:var(--az)}
+  button:disabled{opacity:.4;cursor:default}
+  header button{background:#fff;color:var(--az)}
+  input,select{font:inherit;padding:7px 8px;border:1px solid var(--bd);border-radius:8px;background:#fff}
+  input[type=number]{width:5.2em}
+  input[type=range]{width:100%;padding:0}
+  .acoes{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:10px}
+  .dias{display:flex;gap:6px;flex-wrap:wrap}
+  .dias button{background:#eef1f4;color:var(--mu);padding:7px 0;width:3.1em}
+  .dias button.on{background:var(--az);color:#fff}
+  .prog{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--bd)}
+  .prog .rm{margin-left:auto;background:none;color:#b3261e;padding:6px 8px}
+  .prog.off input[type=time],.prog.off input[type=number]{opacity:.45}
+  .sw{display:flex;align-items:center;gap:8px;font-weight:600}
+  .sw input{width:20px;height:20px}
+  .info{font-size:.8rem;color:var(--mu);margin:6px 0 0}
+  .regando{margin-top:10px;background:#e8f5e9;color:var(--vd);border-radius:8px;padding:10px;font-weight:600}
+  .aviso{max-width:560px;margin:12px auto 0;padding:10px 14px;border-radius:10px;background:#fff4e5;color:#8a4b00;font-size:.9rem}
+  .hidden{display:none!important}
+  .rodape{position:sticky;bottom:0;display:flex;gap:8px;padding:10px 0;background:linear-gradient(transparent,var(--bg) 30%)}
+  .rodape #btnSalvar{flex:1;padding:12px}
+  #btnSalvar.pend{background:#e65100}
+  #toast{position:fixed;left:50%;bottom:80px;transform:translateX(-50%);background:#263238;color:#fff;padding:9px 16px;border-radius:20px;font-size:.9rem;opacity:0;transition:opacity .3s;pointer-events:none}
+  #toast.show{opacity:1}
+</style>
+</head>
+<body>
+<header>
+  <h1>💧 Irrigador</h1>
+  <span id="estado">Desconectado</span>
+  <button id="btnCon">Conectar</button>
+</header>
+
+<div id="aviso" class="aviso">Aperte o botão <b>EN/RESET</b> do controlador para ativar o Bluetooth (fica ativo por 10 min) e toque em <b>Conectar</b>.</div>
+
+<main id="app" class="desab">
+  <section class="card">
+    <h2>Agora</h2>
+    <div class="linha"><span>Relógio do controlador</span><b id="hora">—</b></div>
+    <div class="linha"><span>Próxima rega</span><b id="prox">—</b></div>
+    <div class="linha"><span>Última rega</span><b id="ult">—</b></div>
+    <div class="linha"><span>Pausa</span><b id="pausaTxt">—</b></div>
+    <div id="regandoBox" class="regando hidden">💦 Regando… faltam <span id="resta"></span></div>
+    <div class="acoes">
+      <input id="manualMin" type="number" min="0.5" max="120" step="0.5" value="1"> min
+      <button id="btnRun">Regar agora</button>
+      <button id="btnStop" class="sec">Parar</button>
+    </div>
+    <div class="acoes"><button id="btnSync" class="sec">Sincronizar relógio com este aparelho</button></div>
+  </section>
+
+  <section class="card">
+    <h2>Programação</h2>
+    <label class="sw"><input type="checkbox" id="ativo"> Irrigação automática ligada</label>
+    <h3>Dias da semana</h3>
+    <div id="dias" class="dias"></div>
+    <h3>Horários (até 8 por dia)</h3>
+    <div id="progs"></div>
+    <div class="acoes"><button id="btnAdd" class="sec">+ Adicionar horário</button></div>
+    <p class="info" id="totalDia"></p>
+  </section>
+
+  <section class="card">
+    <h2>Ajustes</h2>
+    <div class="linha"><span>Ajuste sazonal</span><b id="ajusteVal">100%</b></div>
+    <input type="range" id="ajuste" min="0" max="200" step="10">
+    <p class="info">Multiplica todas as durações. Ex.: 50% no inverno, 150% no verão, sem refazer os horários.</p>
+    <h3>Duração máxima por rega</h3>
+    <div class="acoes" style="margin-top:0"><input type="number" id="maxMin" min="1" max="120" step="1"> min</div>
+    <p class="info">Trava de segurança: nenhuma rega (automática ou manual) passa deste tempo.</p>
+  </section>
+
+  <section class="card">
+    <h2>Pausa por chuva</h2>
+    <p class="info" style="margin-top:0">Suspende as regas automáticas por um período e retoma sozinho depois.</p>
+    <div class="acoes">
+      <select id="pausaDias">
+        <option value="1">1 dia</option><option value="2">2 dias</option><option value="3">3 dias</option>
+        <option value="7">1 semana</option><option value="14">2 semanas</option>
+      </select>
+      <button id="btnPausa" class="sec">Pausar</button>
+      <button id="btnRetomar" class="sec">Retomar agora</button>
+    </div>
+  </section>
+
+  <div class="rodape">
+    <button id="btnSalvar">Salvar configuração</button>
+    <button id="btnDormir" class="sec">Encerrar</button>
+  </div>
+</main>
+<div id="toast"></div>
+
+<script>
+const BASE = '-3c4b-4e5a-9b1d-2f6c8a9e0b10';
+const UUID = { svc:'7a1f0001'+BASE, cfg:'7a1f0002'+BASE, hora:'7a1f0003'+BASE, cmd:'7a1f0004'+BASE, status:'7a1f0005'+BASE };
+const DIAS = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+const MAX_PROG = 8;
+const $ = id => document.getElementById(id);
+const enc = new TextEncoder(), dec = new TextDecoder();
+
+let dev = null, ch = {}, cfg = null, poll = null, alterado = false;
+
+// Web Bluetooth não aceita duas operações GATT ao mesmo tempo: fila simples
+let fila = Promise.resolve();
+function gatt(fn){ const p = fila.then(fn); fila = p.catch(()=>{}); return p; }
+const ler = c => gatt(async () => dec.decode(await c.readValue()));
+const escrever = (c, txt) => gatt(() => c.writeValueWithResponse(enc.encode(txt)));
+const espera = ms => new Promise(r => setTimeout(r, ms));
+
+// O RTC guarda hora LOCAL; trocamos "unix local" (segundos) com o ESP32
+const agoraLocal = () => Math.floor(Date.now()/1000) - new Date().getTimezoneOffset()*60;
+const pad = n => String(n).padStart(2,'0');
+function fmt(u, comSeg){
+  if (!u) return '—';
+  const o = {timeZone:'UTC', weekday:'short', day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'};
+  if (comSeg) o.second = '2-digit';
+  return new Date(u*1000).toLocaleString('pt-BR', o);
+}
+function fmtDur(s){
+  s = Math.round(s||0);
+  if (s < 60) return s + ' s';
+  const m = Math.floor(s/60), r = s%60;
+  return r ? `${m} min ${r} s` : `${m} min`;
+}
+function toast(t){ const e=$('toast'); e.textContent=t; e.classList.add('show'); setTimeout(()=>e.classList.remove('show'),2200); }
+function aviso(t){ const e=$('aviso'); if(!t){e.classList.add('hidden');return;} e.innerHTML=t; e.classList.remove('hidden'); }
+function marcar(v=true){ alterado=v; const b=$('btnSalvar'); b.classList.toggle('pend',v); b.textContent = v ? 'Salvar configuração •' : 'Salvar configuração'; }
+
+// ---------------- Conexão ----------------
+async function conectar(){
+  if (!navigator.bluetooth){
+    aviso('Este navegador não tem Web Bluetooth. Use o <b>Chrome</b> (Android ou computador). No iPhone, use o app <b>Bluefy</b>. A página precisa estar em <b>https://</b>.');
+    return;
+  }
+  try{
+    dev = await navigator.bluetooth.requestDevice({ filters:[{namePrefix:'Irrigador'}], optionalServices:[UUID.svc] });
+    dev.addEventListener('gattserverdisconnected', aoDesconectar);
+    $('estado').textContent = 'Conectando…';
+    const srv = await dev.gatt.connect();
+    const s = await srv.getPrimaryService(UUID.svc);
+    for (const k of ['cfg','hora','cmd','status']) ch[k] = await s.getCharacteristic(UUID[k]);
+    await sincronizar(true);
+    await lerConfig();
+    await lerStatus();
+    poll = setInterval(() => lerStatus().catch(()=>{}), 2000);
+    $('estado').textContent = 'Conectado';
+    $('btnCon').textContent = 'Desconectar';
+    $('app').classList.remove('desab');
+    aviso(null);
+  }catch(e){
+    $('estado').textContent = 'Desconectado';
+    if (e.name !== 'NotFoundError') aviso('Não foi possível conectar: ' + e.message);
+  }
+}
+function aoDesconectar(){
+  clearInterval(poll); poll = null;
+  $('estado').textContent = 'Desconectado';
+  $('btnCon').textContent = 'Conectar';
+  $('app').classList.add('desab');
+  aviso('Desconectado. Para configurar de novo, aperte <b>EN/RESET</b> no controlador e toque em <b>Conectar</b>.');
+}
+$('btnCon').onclick = () => (dev && dev.gatt.connected) ? dev.gatt.disconnect() : conectar();
+
+// ---------------- Leitura ----------------
+async function lerConfig(){
+  cfg = JSON.parse(await ler(ch.cfg));
+  cfg.prog = cfg.prog || [];
+  render();
+  marcar(false);
+}
+async function lerStatus(){
+  let s;
+  try { s = JSON.parse(await ler(ch.status)); } catch { return; }
+  $('hora').textContent = s.rtcAus ? 'RTC não encontrado!' : (s.rtcOk ? fmt(s.agora, true) : 'não ajustado');
+  $('prox').textContent = s.prox ? `${fmt(s.prox)} · ${fmtDur(s.proxDur)}` : (cfg && !cfg.ativo ? 'automático desligado' : 'nenhuma');
+  $('ult').textContent  = s.ult ? `${fmt(s.ult)} · ${fmtDur(s.ultDur)}` : '—';
+  $('pausaTxt').textContent = (s.pausa && s.pausa > s.agora) ? 'até ' + fmt(s.pausa) : 'não';
+  $('regandoBox').classList.toggle('hidden', !s.regando);
+  $('resta').textContent = fmtDur(s.resta);
+  if (s.rtcOk && Math.abs(s.agora - agoraLocal()) > 120) sincronizar(true);
+}
+
+// ---------------- Render ----------------
+function render(){
+  $('ativo').checked = !!cfg.ativo;
+  const d = $('dias'); d.innerHTML = '';
+  DIAS.forEach((nome,i) => {
+    const b = document.createElement('button');
+    b.textContent = nome;
+    b.className = (cfg.dias >> i) & 1 ? 'on' : '';
+    b.onclick = () => { cfg.dias ^= (1<<i); b.classList.toggle('on'); marcar(); totalDia(); };
+    d.appendChild(b);
+  });
+  $('ajuste').value = cfg.ajuste;
+  $('ajusteVal').textContent = cfg.ajuste + '%';
+  $('maxMin').value = Math.round(cfg.max/60);
+  renderProgs();
+}
+function renderProgs(){
+  const box = $('progs'); box.innerHTML = '';
+  cfg.prog.forEach((p,i) => {
+    const r = document.createElement('div');
+    r.className = 'prog' + (p.a ? '' : ' off');
+    r.innerHTML = `
+      <input type="checkbox" data-i="${i}" data-k="a" ${p.a?'checked':''} title="Ativo">
+      <input type="time" data-i="${i}" data-k="t" value="${pad(p.h)}:${pad(p.m)}">
+      <input type="number" data-i="${i}" data-k="d" min="0.5" max="120" step="0.5" value="${+(p.d/60).toFixed(2)}"> min
+      <button class="rm" data-i="${i}" title="Remover">✕</button>`;
+    box.appendChild(r);
+  });
+  if (!cfg.prog.length) box.innerHTML = '<p class="info">Nenhum horário. Toque em “Adicionar horário”.</p>';
+  $('btnAdd').disabled = cfg.prog.length >= MAX_PROG;
+  totalDia();
+}
+function totalDia(){
+  if (!cfg) return;
+  const efet = p => Math.min(p.d * cfg.ajuste/100, cfg.max);
+  const ativos = cfg.prog.filter(p => p.a);
+  const tot = ativos.reduce((s,p) => s + efet(p), 0);
+  const nd = DIAS.filter((_,i) => (cfg.dias>>i)&1).length;
+  $('totalDia').textContent = ativos.length
+    ? `${ativos.length} rega(s) por dia · ${fmtDur(tot)} no total (com ajuste) · ${nd} dia(s) por semana`
+    : 'Nenhum horário ativo.';
+}
+
+$('progs').addEventListener('input', e => {
+  const t = e.target, k = t.dataset.k; if (!k) return;
+  const p = cfg.prog[+t.dataset.i];
+  if (k === 'a') { p.a = t.checked ? 1 : 0; t.parentElement.classList.toggle('off', !t.checked); }
+  if (k === 't' && t.value) { const [h,m] = t.value.split(':').map(Number); p.h = h; p.m = m; }
+  if (k === 'd') p.d = Math.round((parseFloat(t.value) || 0) * 60);
+  marcar(); totalDia();
+});
+$('progs').addEventListener('click', e => {
+  if (!e.target.classList.contains('rm')) return;
+  cfg.prog.splice(+e.target.dataset.i, 1); renderProgs(); marcar();
+});
+$('btnAdd').onclick = () => {
+  if (cfg.prog.length >= MAX_PROG) return;
+  const ult = cfg.prog[cfg.prog.length-1];
+  cfg.prog.push({ h: ult ? (ult.h+6)%24 : 6, m: ult ? ult.m : 0, d: ult ? ult.d : 600, a: 1 });
+  renderProgs(); marcar();
+};
+$('ativo').onchange = () => { cfg.ativo = $('ativo').checked; marcar(); };
+$('ajuste').oninput = () => { cfg.ajuste = +$('ajuste').value; $('ajusteVal').textContent = cfg.ajuste+'%'; marcar(); totalDia(); };
+$('maxMin').oninput = () => { cfg.max = Math.max(1, Math.round(+$('maxMin').value || 1)) * 60; marcar(); totalDia(); };
+
+// ---------------- Escrita ----------------
+function validar(){
+  for (const p of cfg.prog) if (!(p.d >= 30)) return 'Cada horário precisa de pelo menos 0,5 min.';
+  const ch = cfg.prog.map(p => p.h*60+p.m);
+  if (new Set(ch).size !== ch.length) return 'Há dois horários iguais.';
+  if (cfg.ativo && cfg.prog.some(p=>p.a) && !cfg.dias) return 'Escolha pelo menos um dia da semana.';
+  const limitados = cfg.prog.filter(p => p.a && p.d*cfg.ajuste/100 > cfg.max);
+  if (limitados.length) toast('Atenção: algumas regas serão cortadas pela duração máxima.');
+  return null;
+}
+async function salvar(){
+  const erro = validar(); if (erro) { toast(erro); return; }
+  cfg.prog.sort((a,b) => (a.h*60+a.m) - (b.h*60+b.m));
+  try{
+    await escrever(ch.cfg, JSON.stringify(cfg));
+    await espera(500);
+    await lerConfig(); await lerStatus();
+    toast('Configuração salva ✔');
+  }catch(e){ toast('Erro ao salvar: ' + e.message); }
+}
+async function sincronizar(silencioso){
+  await escrever(ch.hora, String(agoraLocal()));
+  if (!silencioso) { await espera(300); await lerStatus(); toast('Relógio sincronizado ✔'); }
+}
+async function cmd(c){ try { await escrever(ch.cmd, c); await espera(300); await lerStatus(); } catch(e){ if (c!=='SLEEP') toast('Erro: '+e.message); } }
+
+$('btnSalvar').onclick = salvar;
+$('btnSync').onclick = () => sincronizar(false);
+$('btnRun').onclick  = () => cmd('RUN:' + Math.round((parseFloat($('manualMin').value)||1)*60));
+$('btnStop').onclick = () => cmd('STOP');
+$('btnPausa').onclick = () => { cfg.pausa = agoraLocal() + (+$('pausaDias').value)*86400; salvar(); };
+$('btnRetomar').onclick = () => { cfg.pausa = 0; salvar(); };
+$('btnDormir').onclick = async () => {
+  if (alterado && !confirm('Há alterações não salvas. Encerrar mesmo assim?')) return;
+  await cmd('SLEEP');
+};
+window.addEventListener('beforeunload', e => { if (alterado) { e.preventDefault(); e.returnValue=''; } });
+</script>
+</body>
+</html>
