@@ -287,7 +287,7 @@
         <div class="opcao"><span>Rega iniciada</span><label class="sw peq"><input type="checkbox" data-av="1"><span class="tr"></span></label></div>
         <div class="opcao"><span>Rega concluída / interrompida</span><label class="sw peq"><input type="checkbox" data-av="2"><span class="tr"></span></label></div>
         <div class="opcao"><span>Falta de energia e problemas</span><label class="sw peq"><input type="checkbox" data-av="4"><span class="tr"></span></label></div>
-        <div class="chips" style="margin-top:12px"><button id="btnTeste" class="chip">Enviar aviso de teste</button><button id="btnLimparAv" class="chip">Remover todos os celulares</button></div>
+        <div class="chips" style="margin-top:12px"><button id="btnTeste" class="chip">Enviar aviso de teste</button><button id="btnRefazer" class="chip">Refazer inscrição</button><button id="btnLimparAv" class="chip">Remover todos os celulares</button></div>
       </div>
       <p class="info" id="avNota" style="margin-bottom:0">Os avisos precisam do controlador conectado ao Wi-Fi da propriedade.</p>
     </section>
@@ -976,9 +976,10 @@ async function ativarAvisos(){
     if (perm !== 'granted') { toast('Permita as notificações para receber avisos.'); return renderAvisos(); }
     const reg = await navigator.serviceWorker.ready;
     const info = await api.lerPush();
-    let sub = await reg.pushManager.getSubscription();
-    if (sub && (!sub.options.applicationServerKey || u8b64(sub.options.applicationServerKey) !== info.k)) { await sub.unsubscribe(); sub = null; }
-    if (!sub) sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64u8(info.k) });
+    // sempre cria uma inscrição nova: a antiga pode ter sido descartada pelo Google (erro 410)
+    const velha = await reg.pushManager.getSubscription();
+    if (velha) { try { await velha.unsubscribe(); } catch {} }
+    const sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64u8(info.k) });
     await api.inscrever(sub.toJSON());
     await espera(600); pushInfo = null; await renderAvisos();
     toast('Avisos ativados ✔');
@@ -992,6 +993,7 @@ async function mostrarNotificacaoLocal(t, b){
   } catch { toast(t + ' — ' + b); }
 }
 $('btnAvisos').onclick = ativarAvisos;
+$('btnRefazer').onclick = ativarAvisos;
 $('btnTeste').onclick = async () => { await api.cmd('TESTE'); toast(api === demo ? 'Aviso de teste enviado' : 'Aviso enviado. Deve chegar em alguns segundos.'); };
 $('btnLimparAv').onclick = async () => {
   if (!await confirmar({ icone:'🔕', titulo:'Remover todos os celulares?', texto:'Nenhum celular vai receber avisos até que sejam ativados de novo em cada um.', ok:'Remover todos', perigo:true })) return;
