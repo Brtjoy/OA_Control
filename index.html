@@ -510,11 +510,20 @@ const ble = {
   desconectar(){ if (this.dev && this.dev.gatt.connected) this.dev.gatt.disconnect(); }
 };
 
+const ehIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 async function conectar(){
+  $('erro').classList.add('hidden');
   if (!navigator.bluetooth){
-    mostrarErro('Este navegador não tem Web Bluetooth. Use o <b>Chrome</b> no Android ou no computador (no iPhone, o app <b>Bluefy</b>).');
+    if (ehIOS) mostrarErro('No iPhone, o Safari e o Chrome não acessam o Bluetooth. Baixe o app gratuito <b>Bluefy</b> na App Store e abra <b>' + location.host + '</b> por ele.');
+    else mostrarErro('Este navegador não acessa o Bluetooth. Abra <b>' + location.host + '</b> no <b>Google Chrome</b>. Se você abriu por um link do WhatsApp ou de outro app, toque em ⋮ → <b>Abrir no Chrome</b>.');
     return;
   }
+  try {
+    if (navigator.bluetooth.getAvailability && !(await navigator.bluetooth.getAvailability())) {
+      mostrarErro('O Bluetooth deste celular está <b>desligado</b> ou indisponível. Ligue o Bluetooth e tente de novo.');
+      return;
+    }
+  } catch {}
   try{
     ble.dev = await navigator.bluetooth.requestDevice({ filters:[{namePrefix:'Gota'},{namePrefix:'Irrigador'}], optionalServices:[UUID.svc] });
     ble.dev.addEventListener('gattserverdisconnected', aoDesconectar);
@@ -525,7 +534,14 @@ async function conectar(){
     await iniciarSessao(true);
   }catch(e){
     pill('','Desconectado');
-    if (e.name !== 'NotFoundError') mostrarErro('Não foi possível conectar: ' + e.message + '<br>Chegue mais perto do controlador e tente de novo.');
+    const msg = String(e && e.message || '');
+    if (e.name === 'NotFoundError' && /cancel/i.test(msg)) return;            // a pessoa fechou a lista
+    if (e.name === 'NotFoundError')
+      mostrarErro('Não foi possível usar o Bluetooth. Confira: <b>Bluetooth ligado</b>, <b>Localização ligada</b> e, em Configurações → Apps → Chrome → Permissões, <b>Dispositivos próximos</b> permitido.');
+    else if (e.name === 'SecurityError' || e.name === 'NotAllowedError')
+      mostrarErro('O Chrome não tem permissão para usar o Bluetooth. Em Configurações → Apps → Chrome → Permissões, permita <b>Dispositivos próximos</b> e <b>Localização</b>.');
+    else
+      mostrarErro('Não foi possível conectar (' + esc(msg) + '). Chegue mais perto do controlador e tente de novo.');
   }
 }
 
