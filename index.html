@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Irrigador</title>
+<title>Gota Azul</title>
 <meta name="theme-color" content="#1769aa">
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icon-192.png">
@@ -87,8 +87,6 @@
   .prog{border:1px solid var(--bd);border-radius:14px;padding:12px;margin-bottom:10px;transition:opacity .2s}
   .prog.off{opacity:.5}
   .prog-top{display:flex;align-items:center;gap:10px}
-  .prog .hora{font-size:1.5rem;font-weight:700;border:0;background:transparent;color:var(--tx);padding:0;min-width:0;width:auto;flex:1 1 auto;max-width:11rem}
-  .prog .hora::-webkit-calendar-picker-indicator{opacity:.45;margin-left:2px}
   .step{display:flex;align-items:center;background:#eef2f6;border-radius:10px;margin-left:auto}
   .step button{width:36px;height:36px;font-size:1.2rem;color:var(--az);font-weight:700}
   .step span{min-width:62px;text-align:center;font-weight:600;font-size:.92rem}
@@ -129,25 +127,73 @@
 
   #toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:#263238;color:#fff;padding:10px 18px;border-radius:22px;font-size:.9rem;opacity:0;transition:opacity .3s;pointer-events:none;z-index:30;max-width:90vw;text-align:center}
   #toast.show{opacity:1}
+  .logo{width:28px;height:28px;border-radius:7px}
+  .logo-grande{width:84px;height:84px;border-radius:20px;box-shadow:0 6px 18px rgba(23,105,170,.3)}
+
+  /* botão de horário no cartão */
+  .prog .hora{font-size:1.7rem;font-weight:750;color:var(--tx);padding:2px 6px;margin-left:-6px;border-radius:8px;letter-spacing:-.01em}
+  .prog .hora:active{background:#eef2f6}
+  .prog .hora small{font-size:.75rem;color:var(--az);font-weight:600;margin-left:6px;vertical-align:middle}
+
+  /* folha inferior (seletor) */
+  .sheet{position:fixed;inset:0;z-index:40;display:flex;align-items:flex-end;justify-content:center}
+  .sheet-fundo{position:absolute;inset:0;background:rgba(10,25,40,.45);animation:fade .2s}
+  .sheet-painel{position:relative;width:100%;max-width:560px;background:#fff;border-radius:22px 22px 0 0;padding:10px 18px calc(18px + env(safe-area-inset-bottom));animation:sobe .25s cubic-bezier(.2,.9,.3,1)}
+  .sheet-painel::before{content:"";display:block;width:40px;height:5px;border-radius:3px;background:#d5dce4;margin:0 auto 12px}
+  .sheet-tit{font-weight:700;text-align:center;color:var(--mu);font-size:.85rem;text-transform:uppercase;letter-spacing:.05em}
+  @keyframes sobe{from{transform:translateY(100%)}to{transform:none}}
+  @keyframes fade{from{opacity:0}to{opacity:1}}
+  .visor{text-align:center;font-size:3.2rem;font-weight:800;letter-spacing:-.03em;color:var(--az);margin:4px 0 2px;font-variant-numeric:tabular-nums}
+  .visor-sub{text-align:center;color:var(--mu);font-size:.85rem;margin-bottom:8px;min-height:1.2em}
+  .rodas{position:relative;display:flex;justify-content:center;align-items:center;gap:6px;height:220px;margin:4px 0 10px}
+  .roda{height:220px;width:96px;overflow-y:scroll;scroll-snap-type:y mandatory;scrollbar-width:none;position:relative;z-index:2;
+        -webkit-mask-image:linear-gradient(transparent,#000 30%,#000 70%,transparent);mask-image:linear-gradient(transparent,#000 30%,#000 70%,transparent)}
+  .roda::-webkit-scrollbar{display:none}
+  .roda div{height:44px;line-height:44px;text-align:center;font-size:1.6rem;font-weight:600;color:#9aa6b2;scroll-snap-align:center;font-variant-numeric:tabular-nums;cursor:pointer}
+  .roda div.sel{color:var(--tx);font-weight:800;font-size:1.9rem}
+  .roda .pad{height:88px;scroll-snap-align:none;cursor:default}
+  .rodas .faixa{position:absolute;left:50%;transform:translateX(-50%);width:230px;height:46px;top:87px;background:var(--az-cl);border-radius:12px;z-index:1}
+  .rodas .dois{font-size:2rem;font-weight:800;color:var(--az);z-index:2}
+  .rodas .rot-roda{position:absolute;bottom:-4px;font-size:.7rem;color:var(--mu);font-weight:600}
+  .atalho{justify-content:center;margin-bottom:14px}
+  .atalho .chip{padding:7px 12px;font-size:.85rem}
+  .sheet-acoes{display:flex;gap:10px}
+  .sheet-acoes .btn{flex:1;padding:14px}
+
+  /* Wi-Fi e avisos */
+  .estado{display:flex;align-items:center;gap:12px}
+  .estado .ic{width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;background:#eef2f6;flex:none}
+  .estado .ic.ok{background:var(--vd-cl)} .estado .ic.erro{background:#fdecea} .estado .ic.esp{background:var(--am-cl)}
+  .estado b{display:block} .estado .info{display:block}
+  .redes{max-height:300px;overflow-y:auto;margin:8px 0 12px}
+  .rede{display:flex;align-items:center;gap:10px;width:100%;padding:13px 6px;border-bottom:1px solid var(--bd);text-align:left}
+  .rede:active{background:#f4f7fa}
+  .rede span:first-child{flex:1;font-weight:600}
+  .sinal{font-size:.8rem;color:var(--mu)}
+  .campo{width:100%;padding:13px 12px;border:1.5px solid var(--bd);border-radius:12px;font-size:1rem;margin:6px 0 12px}
+  .campo:focus{outline:none;border-color:var(--az)}
+  .opcao{display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px dashed var(--bd)}
+  .opcao:last-child{border-bottom:0}
   .demo-tag{background:#ffd54f;color:#5d4300;font-size:.7rem;font-weight:700;padding:3px 8px;border-radius:10px}
 </style>
 </head>
 <body>
 <header>
-  <h1>💧 Irrigador <span id="demoTag" class="demo-tag hidden">DEMO</span></h1>
+  <h1><img src="icon-192.png" alt="" class="logo"> Gota Azul <span id="demoTag" class="demo-tag hidden">DEMO</span></h1>
   <div id="pill" class="pill"><i></i><span id="pillTxt">Desconectado</span></div>
 </header>
 
 <main>
   <!-- desconectado -->
   <section id="telaInicial" class="card boas">
-    <div class="gota">💧</div>
-    <h3>Conectar ao controlador</h3>
+    <img src="icon-192.png" alt="" class="logo-grande">
+    <h3>Gota Azul</h3>
+    <p class="info" style="margin-top:0">Controle de irrigação</p>
     <div id="erro" class="erro hidden"></div>
     <ol>
-      <li>Aperte o botão <b>RESET</b> da placa.</li>
-      <li>Em até 10 minutos, toque em <b>Conectar</b>.</li>
-      <li>Escolha <b>Irrigador</b> na lista.</li>
+      <li>Fique perto do controlador (até ~15 m).</li>
+      <li>Toque em <b>Conectar</b>.</li>
+      <li>Escolha <b>Gota Azul</b> na lista.</li>
     </ol>
     <button id="btnCon" class="btn full">Conectar</button>
     <p><button id="btnDemo" class="info" style="text-decoration:underline">Ver demonstração sem a placa</button></p>
@@ -209,6 +255,33 @@
       <p class="info" style="margin-bottom:0">As regas automáticas voltam sozinhas no fim do período.</p>
     </section>
 
+    <!-- Wi-Fi -->
+    <section class="card">
+      <h2>Internet (Wi-Fi)</h2>
+      <div class="estado">
+        <div class="ic" id="wfIc">📶</div>
+        <div style="flex:1"><b id="wfTit">—</b><span class="info" id="wfSub"></span></div>
+        <button id="btnWifi" class="chip">Configurar</button>
+      </div>
+    </section>
+
+    <!-- avisos -->
+    <section class="card">
+      <h2>Avisos no celular</h2>
+      <div class="estado" style="margin-bottom:12px">
+        <div class="ic" id="avIc">🔔</div>
+        <div><b id="avTit">Avisos desligados neste celular</b><span class="info" id="avSub">Receba um aviso quando regar, mesmo longe da propriedade.</span></div>
+      </div>
+      <button id="btnAvisos" class="btn full">Ativar avisos neste celular</button>
+      <div id="avOpcoes" class="hidden" style="margin-top:10px">
+        <div class="opcao"><span>Rega iniciada</span><label class="sw peq"><input type="checkbox" data-av="1"><span class="tr"></span></label></div>
+        <div class="opcao"><span>Rega concluída / interrompida</span><label class="sw peq"><input type="checkbox" data-av="2"><span class="tr"></span></label></div>
+        <div class="opcao"><span>Falta de energia e problemas</span><label class="sw peq"><input type="checkbox" data-av="4"><span class="tr"></span></label></div>
+        <div class="chips" style="margin-top:12px"><button id="btnTeste" class="chip">Enviar aviso de teste</button><button id="btnLimparAv" class="chip">Remover todos os celulares</button></div>
+      </div>
+      <p class="info" id="avNota" style="margin-bottom:0">Os avisos precisam do controlador conectado ao Wi-Fi da propriedade.</p>
+    </section>
+
     <!-- avançado -->
     <section class="card">
       <details>
@@ -220,7 +293,6 @@
           <div class="kv"><span>Firmware</span><b id="fw">—</b></div>
           <div class="chips" style="margin-top:12px">
             <button id="btnSync" class="chip">Acertar relógio</button>
-            <button id="btnDormir" class="chip">Desligar Bluetooth</button>
             <button id="btnDesc" class="chip">Desconectar</button>
           </div>
         </div>
@@ -236,10 +308,54 @@
 </div>
 <div id="toast"></div>
 
+<div id="sheetHora" class="sheet hidden">
+  <div class="sheet-fundo" data-fechar></div>
+  <div class="sheet-painel">
+    <div class="sheet-tit">Horário da rega</div>
+    <div class="visor" id="visor">06:00</div>
+    <div class="visor-sub" id="visorSub"></div>
+    <div class="rodas">
+      <div class="faixa"></div>
+      <div class="roda" id="rodaH"></div>
+      <div class="dois">:</div>
+      <div class="roda" id="rodaM"></div>
+    </div>
+    <div class="chips atalho" id="atalhosHora"></div>
+    <div class="sheet-acoes">
+      <button class="btn sec" data-fechar>Cancelar</button>
+      <button class="btn" id="btnHoraOk">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+<div id="sheetWifi" class="sheet hidden">
+  <div class="sheet-fundo" data-fechar></div>
+  <div class="sheet-painel">
+    <div class="sheet-tit">Wi-Fi da propriedade</div>
+    <div id="wfPasso1">
+      <p class="info" style="text-align:center">Escolha a rede que alcança o controlador</p>
+      <div class="redes" id="listaRedes"></div>
+      <div class="sheet-acoes">
+        <button class="btn sec" id="btnProcurar">Procurar de novo</button>
+        <button class="btn sec" id="btnEsquecer">Desligar Wi-Fi</button>
+      </div>
+    </div>
+    <div id="wfPasso2" class="hidden">
+      <p style="text-align:center;margin:10px 0 4px">Rede: <b id="wfRede"></b></p>
+      <input id="wfSenha" class="campo" type="password" placeholder="Senha do Wi-Fi" autocomplete="off">
+      <label class="info" style="display:flex;gap:8px;align-items:center;margin:-4px 0 14px"><input type="checkbox" id="wfMostrar"> Mostrar senha</label>
+      <div class="sheet-acoes">
+        <button class="btn sec" id="btnVoltarRedes">Voltar</button>
+        <button class="btn" id="btnConectarWifi">Conectar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
 // ===================== Constantes =====================
 const BASE = '-3c4b-4e5a-9b1d-2f6c8a9e0b10';
-const UUID = { svc:'7a1f0001'+BASE, cfg:'7a1f0002'+BASE, hora:'7a1f0003'+BASE, cmd:'7a1f0004'+BASE, status:'7a1f0005'+BASE };
+const UUID = { svc:'7a1f0001'+BASE, cfg:'7a1f0002'+BASE, hora:'7a1f0003'+BASE, cmd:'7a1f0004'+BASE, status:'7a1f0005'+BASE, wifi:'7a1f0006'+BASE, push:'7a1f0007'+BASE };
 const DIAS = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
 const MAX_PROG = 8;
 const PASSOS = [30,60,120,180,240,300,420,600,900,1200,1500,1800,2400,2700,3600,4500,5400,7200]; // segundos
@@ -316,12 +432,17 @@ const ble = {
   salvarConfig(o){ return this.esc('cfg', JSON.stringify(o)); },
   async lerStatus(){ return JSON.parse(await this.ler('status')); },
   cmd(c){ return this.esc('cmd', c); },
-  hora(u){ return this.esc('hora', String(u)); },
+  hora(u){ return this.esc('hora', `${u};${-new Date().getTimezoneOffset()*60}`); },
+  async lerWifi(){ return this.ch.wifi ? JSON.parse(await this.ler('wifi')) : {redes:[]}; },
+  salvarWifi(o){ return this.esc('wifi', JSON.stringify(o)); },
+  async lerPush(){ return this.ch.push ? JSON.parse(await this.ler('push')) : null; },
+  inscrever(sub){ return this.esc('push', JSON.stringify(sub)); },
   async conectarGatt(){
     this.fila = Promise.resolve();
     const srv = await this.dev.gatt.connect();
     const s = await srv.getPrimaryService(UUID.svc);
     for (const k of ['cfg','hora','cmd','status']) this.ch[k] = await s.getCharacteristic(UUID[k]);
+    for (const k of ['wifi','push']) { try { this.ch[k] = await s.getCharacteristic(UUID[k]); } catch { this.ch[k] = null; } }  // firmware antigo
   },
   desconectar(){ if (this.dev && this.dev.gatt.connected) this.dev.gatt.disconnect(); }
 };
@@ -332,7 +453,7 @@ async function conectar(){
     return;
   }
   try{
-    ble.dev = await navigator.bluetooth.requestDevice({ filters:[{namePrefix:'Irrigador'}], optionalServices:[UUID.svc] });
+    ble.dev = await navigator.bluetooth.requestDevice({ filters:[{namePrefix:'Gota'},{namePrefix:'Irrigador'}], optionalServices:[UUID.svc] });
     ble.dev.addEventListener('gattserverdisconnected', aoDesconectar);
     saindo = false;
     pill('wait','Conectando…');
@@ -341,7 +462,7 @@ async function conectar(){
     await iniciarSessao(true);
   }catch(e){
     pill('','Desconectado');
-    if (e.name !== 'NotFoundError') mostrarErro('Não foi possível conectar: ' + e.message + '<br>Aperte RESET na placa e tente de novo.');
+    if (e.name !== 'NotFoundError') mostrarErro('Não foi possível conectar: ' + e.message + '<br>Chegue mais perto do controlador e tente de novo.');
   }
 }
 
@@ -351,6 +472,7 @@ async function iniciarSessao(sincronizarHora){
   await atualizarStatus();
   clearInterval(poll);
   poll = setInterval(() => atualizarStatus().catch(()=>{}), 2000);
+  pushInfo = null;
   pill('on', api === demo ? 'Demonstração' : 'Conectado');
   $('demoTag').classList.toggle('hidden', api !== demo);
   $('telaInicial').classList.add('hidden');
@@ -375,7 +497,7 @@ async function aoDesconectar(){
   $('app').classList.add('hidden');
   $('telaInicial').classList.remove('hidden');
   $('barraSalvar').classList.remove('show');
-  if (!saindo) mostrarErro(`A conexão caiu às ${hora}. Aperte <b>RESET</b> na placa e conecte de novo.`);
+  if (!saindo) mostrarErro(`A conexão caiu às ${hora}. Chegue mais perto do controlador e toque em <b>Conectar</b>.`);
   else $('erro').classList.add('hidden');
 }
 
@@ -388,6 +510,14 @@ const demo = {
       {h:6, m:0,  d:600, a:1, w:127},
       {h:18,m:30, d:300, a:1, w:0b0101010} ]},
   rega:null, ult:0, ultDur:0, t0:Date.now(),
+  wifi:{ st:'sem', ssid:'', rssi:0, ntp:false }, redes:[], pushN:0, pushAtivo:false,
+  async lerWifi(){ return { redes:this.redes }; },
+  async salvarWifi(o){
+    this.wifi = { st: o.ssid ? 'conectando' : 'sem', ssid:o.ssid, rssi:-60, ntp:false };
+    if (o.ssid) setTimeout(() => this.wifi = { st: o.pass.length >= 8 || !o.pass ? 'ok' : 'erro', ssid:o.ssid, rssi:-60, ntp:true }, 2500);
+  },
+  async lerPush(){ return { k:'demo', n:this.pushN }; },
+  async inscrever(){ this.pushN = Math.max(1, this.pushN); },
   async lerConfig(){ return JSON.parse(JSON.stringify(this.c)); },
   async salvarConfig(o){ this.c = JSON.parse(JSON.stringify(o)); },
   async hora(){},
@@ -395,7 +525,10 @@ const demo = {
     const a = agoraLocal();
     if (this.rega && (c === 'STOP' || c.startsWith('RUN:'))) { this.ult = this.rega.ini; this.ultDur = a - this.rega.ini; this.rega = null; }
     if (c.startsWith('RUN:')) this.rega = { ini:a, dur: Math.min(+c.slice(4), this.c.max) };
-    if (c === 'SLEEP') { saindo = true; aoDesconectar(); }
+    if (c === 'SCAN') { this.redes = []; setTimeout(() => this.redes = [
+      {s:'Fazenda Boa Vista', r:-52, l:true}, {s:'Casa Sede 2.4G', r:-66, l:true}, {s:'Galpão', r:-78, l:true}, {s:'Visitantes', r:-80, l:false}], 2000); }
+    if (c === 'PUSHCLEAR') { this.pushN = 0; this.pushAtivo = false; }
+    if (c === 'TESTE') mostrarNotificacaoLocal('🔔 Teste de aviso', 'Os avisos do Gota Azul estão funcionando neste celular.');
   },
   async lerStatus(){
     const a = agoraLocal();
@@ -405,7 +538,7 @@ const demo = {
     return { agora:a, rtcOk:true, regando:!!this.rega,
       resta: this.rega ? this.rega.ini + this.rega.dur - a : 0, total: this.rega ? this.rega.dur : 0, origem:-1,
       prox: px ? px.t : 0, proxDur: px ? dEf(px.i) : 0, ult:this.ult, ultDur:this.ultDur,
-      pausa: salvoCfg.pausa, fw:'demo', boots:1, reset:'demonstração', up: Math.round((Date.now()-this.t0)/1000) };
+      pausa: salvoCfg.pausa, wifi:this.wifi, push:this.pushN, fw:'demo', boots:1, reset:'demonstração', up: Math.round((Date.now()-this.t0)/1000) };
   }
 };
 $('btnDemo').onclick = () => { api = demo; saindo = false; iniciarSessao(false); };
@@ -414,7 +547,7 @@ $('btnDemo').onclick = () => { api = demo; saindo = false; iniciarSessao(false);
 async function atualizarStatus(){
   try { st = await api.lerStatus(); stEm = Date.now(); } catch { return; }
   if (api === ble && st.rtcOk && Math.abs(st.agora - agoraLocal()) > 120) api.hora(agoraLocal());
-  renderHero(); renderControlador(); renderTimeline();
+  renderHero(); renderControlador(); renderTimeline(); renderWifi(); renderAvisosNota();
 }
 const passou = () => st ? Math.floor((Date.now() - stEm)/1000) : 0;
 
@@ -482,13 +615,13 @@ function renderControlador(){
 function normalizar(c){
   c.prog = (c.prog || []).map(p => ({ h:p.h|0, m:p.m|0, d:p.d|0, a:p.a?1:0, w:(p.w ?? c.dias ?? 127) & 127 }));
   delete c.dias;
-  c.ajuste = c.ajuste ?? 100; c.max = c.max ?? 1800; c.pausa = c.pausa || 0; c.ativo = !!c.ativo;
+  c.ajuste = c.ajuste ?? 100; c.max = c.max ?? 1800; c.pausa = c.pausa || 0; c.ativo = !!c.ativo; c.av = c.av ?? 7;
   return c;
 }
 const alterado = () => cfg && JSON.stringify(cfg) !== salvo;
 function marcar(){ $('barraSalvar').classList.toggle('show', alterado()); }
 
-function renderTudo(){ renderProgs(); renderAjustes(); renderHero(); renderControlador(); marcar(); }
+function renderTudo(){ renderProgs(); renderAjustes(); renderHero(); renderControlador(); renderWifi(); renderAvisos(); marcar(); }
 
 function renderTimeline(){
   if (!cfg) return;
@@ -515,7 +648,7 @@ function renderProgs(){
     const dEf = durEfet(p);
     el.innerHTML = `
       <div class="prog-top">
-        <input type="time" class="hora" value="${pad(p.h)}:${pad(p.m)}" data-act="hora">
+        <button class="hora" data-act="hora">${pad(p.h)}:${pad(p.m)}<small>alterar</small></button>
         <div class="step"><button data-act="menos">−</button><span>${fmtDur(p.d)}</span><button data-act="mais">+</button></div>
       </div>
       <div class="dias-rot"><span>Dias da rega:</span>
@@ -568,12 +701,14 @@ function passo(v, dir, min=30){
 // eventos dos horários
 $('progs').addEventListener('click', e => {
   const b = e.target.closest('[data-act]'); if (!b || b.tagName === 'INPUT') return;
+  if (!b.closest('.prog')) return;
   const i = +b.closest('.prog').dataset.i, p = cfg.prog[i];
   switch (b.dataset.act){
     case 'mais':  p.d = passo(p.d, +1); break;
     case 'menos': p.d = passo(p.d, -1); break;
     case 'dia':   p.w ^= 1 << +b.dataset.d; break;
     case 'w':     p.w = +b.dataset.w; break;
+    case 'hora':  abrirRelogio(p.h, p.m, (h,m) => { p.h = h; p.m = m; renderProgs(); marcar(); }, i); return;
     case 'rm':    if (!confirm(`Remover o horário das ${pad(p.h)}:${pad(p.m)}?`)) return; cfg.prog.splice(i,1); break;
     default: return;
   }
@@ -582,16 +717,17 @@ $('progs').addEventListener('click', e => {
 $('progs').addEventListener('change', e => {
   const t = e.target, act = t.dataset.act; if (!act) return;
   const p = cfg.prog[+t.closest('.prog').dataset.i];
-  if (act === 'hora' && t.value){ const [h,m] = t.value.split(':').map(Number); p.h = h; p.m = m; renderTimeline();
-    t.closest('.prog').querySelector('.frase').innerHTML = frase(p); }
   if (act === 'ativo'){ p.a = t.checked ? 1 : 0; renderProgs(); }
   marcar();
 });
 $('btnAdd').onclick = () => {
   const ult = cfg.prog[cfg.prog.length-1];
-  cfg.prog.push(ult ? { h:(ult.h+6)%24, m:ult.m, d:ult.d, a:1, w:ult.w } : { h:6, m:0, d:600, a:1, w:127 });
-  renderProgs(); marcar();
-  $('progs').lastElementChild.scrollIntoView({behavior:'smooth', block:'center'});
+  const base = ult ? { h:(ult.h+6)%24, m:ult.m } : { h:6, m:0 };
+  abrirRelogio(base.h, base.m, (h,m) => {
+    cfg.prog.push({ h, m, d: ult ? ult.d : 600, a:1, w: ult ? ult.w : 127 });
+    renderProgs(); marcar();
+    $('progs').lastElementChild.scrollIntoView({behavior:'smooth', block:'center'});
+  }, -1);
 };
 $('ajuste').oninput = () => { cfg.ajuste = +$('ajuste').value; renderAjustes(); renderProgs(); marcar(); };
 document.querySelectorAll('[data-max]').forEach(b => b.onclick = () => {
@@ -641,12 +777,197 @@ $('chipsManual').onclick = async e => {
 };
 $('btnParar').onclick = async () => { await api.cmd('STOP'); await espera(300); await atualizarStatus(); };
 $('btnSync').onclick  = async () => { await api.hora(agoraLocal()); await espera(300); await atualizarStatus(); toast('Relógio acertado ✔'); };
-$('btnDormir').onclick = async () => {
-  if (alterado() && !confirm('Há alterações não salvas. Desligar mesmo assim?')) return;
-  saindo = true; try { await api.cmd('SLEEP'); } catch {}
-};
 $('btnDesc').onclick = () => { saindo = true; if (api === demo) aoDesconectar(); else ble.desconectar(); };
 $('btnCon').onclick = conectar;
+
+
+// ===================== Seletor de horário (roda) =====================
+const ITEM = 44;
+let relogioCb = null, relogioIdx = -1;
+function montarRoda(el, n){
+  el.innerHTML = '<div class="pad"></div>' + Array.from({length:n}, (_,i) => `<div data-v="${i}">${pad(i)}</div>`).join('') + '<div class="pad"></div>';
+}
+montarRoda($('rodaH'), 24); montarRoda($('rodaM'), 60);
+const valorRoda = el => Math.max(0, Math.min(el.children.length - 3, Math.round(el.scrollTop / ITEM)));
+function marcarRoda(el){ const v = valorRoda(el); for (const c of el.children) c.classList.toggle('sel', c.dataset.v !== undefined && +c.dataset.v === v); return v; }
+function irPara(el, v, suave){ el.scrollTo({ top: v*ITEM, behavior: suave ? 'smooth' : 'auto' }); }
+const periodo = h => h < 5 ? 'madrugada' : h < 12 ? 'manhã' : h < 18 ? 'tarde' : 'noite';
+const conflita = (h,m) => cfg.prog.some((p,i) => i !== relogioIdx && p.h === h && p.m === m);
+function atualizarVisor(){
+  const h = marcarRoda($('rodaH')), m = marcarRoda($('rodaM'));
+  $('visor').textContent = `${pad(h)}:${pad(m)}`;
+  $('visorSub').textContent = conflita(h,m) ? '⚠ Já existe um horário igual' : `de ${periodo(h)}`;
+}
+for (const id of ['rodaH','rodaM']){
+  const el = $(id); let raf;
+  el.addEventListener('scroll', () => { cancelAnimationFrame(raf); raf = requestAnimationFrame(atualizarVisor); });
+  el.addEventListener('click', e => { const d = e.target.closest('[data-v]'); if (d) irPara(el, +d.dataset.v, true); });
+}
+const ATALHOS = [[5,0],[6,0],[7,0],[17,0],[18,0],[19,0]];
+$('atalhosHora').innerHTML = ATALHOS.map(([h,m]) => `<button class="chip" data-h="${h}" data-m="${m}">${pad(h)}:${pad(m)}</button>`).join('');
+$('atalhosHora').onclick = e => { const b = e.target.closest('[data-h]'); if (!b) return; irPara($('rodaH'), +b.dataset.h, true); irPara($('rodaM'), +b.dataset.m, true); };
+function abrirRelogio(h, m, cb, idx){
+  relogioCb = cb; relogioIdx = idx;
+  abrirSheet('sheetHora');
+  requestAnimationFrame(() => { irPara($('rodaH'), h); irPara($('rodaM'), m); atualizarVisor(); });
+}
+$('btnHoraOk').onclick = () => {
+  const h = valorRoda($('rodaH')), m = valorRoda($('rodaM'));
+  if (conflita(h,m)) { toast('Já existe um horário igual'); return; }
+  fecharSheets(); if (relogioCb) relogioCb(h, m);
+};
+function abrirSheet(id){ $(id).classList.remove('hidden'); document.body.style.overflow = 'hidden'; }
+function fecharSheets(){ document.querySelectorAll('.sheet').forEach(x => x.classList.add('hidden')); document.body.style.overflow = ''; }
+document.querySelectorAll('[data-fechar]').forEach(b => b.onclick = fecharSheets);
+
+// ===================== Wi-Fi =====================
+const esc = t => String(t).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const qualidade = r => r >= -55 ? 'ótimo' : r >= -67 ? 'bom' : r >= -75 ? 'fraco' : 'muito fraco';
+const barras = r => r >= -55 ? '▂▄▆█' : r >= -67 ? '▂▄▆' : r >= -75 ? '▂▄' : '▂';
+const temRecurso = k => api === demo || !!(ble.ch && ble.ch[k]);
+
+function renderWifi(){
+  const ic = $('wfIc'); ic.className = 'ic';
+  if (!temRecurso('wifi')){
+    ic.textContent = '📶'; $('wfTit').textContent = 'Indisponível'; $('wfSub').textContent = 'Atualize o controlador para o firmware 2.0.';
+    $('btnWifi').disabled = true; return;
+  }
+  $('btnWifi').disabled = false;
+  const w = (st && st.wifi) || { st:'sem' };
+  if (w.st === 'ok'){ ic.classList.add('ok'); ic.textContent = '📶'; $('wfTit').textContent = w.ssid;
+    $('wfSub').textContent = `Conectado · sinal ${qualidade(w.rssi)}${w.ntp ? ' · relógio pela internet' : ''}`; }
+  else if (w.st === 'erro'){ ic.classList.add('erro'); ic.textContent = '⚠️'; $('wfTit').textContent = w.ssid; $('wfSub').textContent = 'Não conectou: confira a senha ou o alcance.'; }
+  else if (w.st === 'conectando'){ ic.classList.add('esp'); ic.textContent = '⏳'; $('wfTit').textContent = w.ssid; $('wfSub').textContent = 'Conectando…'; }
+  else { ic.textContent = '📶'; $('wfTit').textContent = 'Sem internet'; $('wfSub').textContent = 'Conecte ao Wi-Fi para receber avisos de longe.'; }
+  $('btnWifi').textContent = w.st === 'sem' ? 'Configurar' : 'Trocar';
+}
+
+let redeEscolhida = '';
+async function procurarRedes(){
+  $('listaRedes').innerHTML = '<p class="info" style="text-align:center">Procurando redes…</p>';
+  await api.cmd('SCAN');
+  for (let t = 0; t < 10; t++){
+    await espera(1500);
+    const r = await api.lerWifi();
+    if (!r.busca && r.redes && r.redes.length){ mostrarRedes(r.redes); return; }
+  }
+  $('listaRedes').innerHTML = '<p class="info" style="text-align:center">Nenhuma rede encontrada. O roteador alcança o controlador?</p>';
+}
+function mostrarRedes(redes){
+  redes.sort((a,b) => b.r - a.r);
+  $('listaRedes').innerHTML = redes.map(r => `<button class="rede" data-s="${esc(r.s)}" data-l="${r.l?1:0}">
+      <span>${esc(r.s)}</span><span class="sinal">${r.l ? '🔒 ' : ''}${barras(r.r)}</span></button>`).join('');
+}
+$('listaRedes').onclick = e => {
+  const b = e.target.closest('.rede'); if (!b) return;
+  redeEscolhida = b.dataset.s;
+  if (b.dataset.l === '0') { conectarWifi(''); return; }
+  $('wfRede').textContent = redeEscolhida; $('wfSenha').value = '';
+  $('wfPasso1').classList.add('hidden'); $('wfPasso2').classList.remove('hidden');
+  setTimeout(() => $('wfSenha').focus(), 150);
+};
+async function conectarWifi(senha){
+  await api.salvarWifi({ ssid: redeEscolhida, pass: senha });
+  fecharSheets(); toast('Conectando ao Wi-Fi…');
+  for (let t = 0; t < 12; t++){
+    await espera(1500); await atualizarStatus();
+    const w = st && st.wifi;
+    if (w && w.st === 'ok') { toast('Wi-Fi conectado ✔'); return; }
+    if (w && w.st === 'erro' && t > 2) break;
+  }
+  toast('Não conectou. Confira a senha e o alcance.');
+}
+$('btnConectarWifi').onclick = () => conectarWifi($('wfSenha').value);
+$('wfSenha').addEventListener('keydown', e => { if (e.key === 'Enter') conectarWifi($('wfSenha').value); });
+$('wfMostrar').onchange = e => $('wfSenha').type = e.target.checked ? 'text' : 'password';
+$('btnVoltarRedes').onclick = () => { $('wfPasso2').classList.add('hidden'); $('wfPasso1').classList.remove('hidden'); };
+$('btnProcurar').onclick = procurarRedes;
+$('btnEsquecer').onclick = async () => {
+  if (!confirm('Desligar o Wi-Fi do controlador? Os avisos param de chegar.')) return;
+  await api.salvarWifi({ ssid:'', pass:'' }); fecharSheets(); await espera(500); await atualizarStatus();
+};
+$('btnWifi').onclick = () => { $('wfPasso2').classList.add('hidden'); $('wfPasso1').classList.remove('hidden'); abrirSheet('sheetWifi'); procurarRedes(); };
+
+// ===================== Avisos (Web Push) =====================
+const suportaPush = 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
+let pushInfo = null;   // { k: chave pública do controlador, n: celulares inscritos }
+function b64u8(t){ t = t.replace(/-/g,'+').replace(/_/g,'/'); const b = atob(t + '='.repeat((4 - t.length % 4) % 4)); return Uint8Array.from(b, c => c.charCodeAt(0)); }
+function u8b64(buf){ return btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,''); }
+async function minhaInscricao(){ if (!suportaPush) return null; const reg = await navigator.serviceWorker.ready; return reg.pushManager.getSubscription(); }
+
+async function avisosAtivos(){
+  if (api === demo) return demo.pushAtivo;
+  if (!suportaPush || Notification.permission !== 'granted' || !pushInfo || !pushInfo.n) return false;
+  const sub = await minhaInscricao();
+  return !!(sub && sub.options.applicationServerKey && u8b64(sub.options.applicationServerKey) === pushInfo.k);
+}
+async function renderAvisos(){
+  const ic = $('avIc'); ic.className = 'ic';
+  const mostrar = (tit, sub, botao, opcoes) => {
+    $('avTit').textContent = tit; $('avSub').textContent = sub;
+    $('btnAvisos').classList.toggle('hidden', !botao); $('avOpcoes').classList.toggle('hidden', !opcoes);
+  };
+  if (!temRecurso('push')) { mostrar('Indisponível', 'Atualize o controlador para o firmware 2.0.', false, false); return; }
+  if (api !== demo && !suportaPush) { mostrar('Não suportado', 'Use o Chrome no Android, com o app instalado.', false, false); return; }
+  try { if (!pushInfo) pushInfo = await api.lerPush(); } catch { pushInfo = null; }
+  const ativo = await avisosAtivos();
+  const n = pushInfo ? pushInfo.n : 0;
+  if (ativo){
+    ic.classList.add('ok');
+    mostrar('Avisos ativos neste celular', `${n} celular${n > 1 ? 'es recebem' : ' recebe'} os avisos deste controlador.`, false, true);
+  } else if (api !== demo && Notification.permission === 'denied'){
+    ic.classList.add('erro');
+    mostrar('Notificações bloqueadas', 'Libere em Chrome → Configurações → Notificações → brtjoy.github.io.', false, false);
+  } else {
+    mostrar('Avisos desligados neste celular', n ? `${n} outro(s) celular(es) já recebe(m) avisos.` : 'Receba um aviso quando regar, mesmo longe da propriedade.', true, false);
+  }
+  const salvoCfg = JSON.parse(salvo);
+  document.querySelectorAll('[data-av]').forEach(x => x.checked = !!(salvoCfg.av & +x.dataset.av));
+  renderAvisosNota();
+}
+function renderAvisosNota(){
+  const w = st && st.wifi;
+  $('avNota').textContent = !w || w.st !== 'ok'
+    ? '⚠ O controlador está sem internet. Os avisos ficam guardados (até 10) e saem quando a conexão voltar.'
+    : `Avisos enviados pela internet da propriedade${st.fila ? ` · ${st.fila} na fila` : ''}.`;
+}
+async function ativarAvisos(){
+  if (api === demo){
+    if ('Notification' in window) await Notification.requestPermission();
+    demo.pushAtivo = true; demo.pushN = Math.max(1, demo.pushN); pushInfo = null; await renderAvisos(); toast('Avisos ativados ✔'); return;
+  }
+  try {
+    const perm = await Notification.requestPermission();
+    if (perm !== 'granted') { toast('Permita as notificações para receber avisos.'); return renderAvisos(); }
+    const reg = await navigator.serviceWorker.ready;
+    const info = await api.lerPush();
+    let sub = await reg.pushManager.getSubscription();
+    if (sub && (!sub.options.applicationServerKey || u8b64(sub.options.applicationServerKey) !== info.k)) { await sub.unsubscribe(); sub = null; }
+    if (!sub) sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64u8(info.k) });
+    await api.inscrever(sub.toJSON());
+    await espera(600); pushInfo = null; await renderAvisos();
+    toast('Avisos ativados ✔');
+  } catch(e) { toast('Não foi possível ativar: ' + e.message); }
+}
+async function mostrarNotificacaoLocal(t, b){
+  try {
+    if (Notification.permission !== 'granted') { toast(t + ' — ' + b); return; }
+    const reg = await navigator.serviceWorker.ready;
+    reg.showNotification(t, { body:b, icon:'icon-192.png', badge:'icon-192.png' });
+  } catch { toast(t + ' — ' + b); }
+}
+$('btnAvisos').onclick = ativarAvisos;
+$('btnTeste').onclick = async () => { await api.cmd('TESTE'); toast(api === demo ? 'Aviso de teste enviado' : 'Aviso enviado. Deve chegar em alguns segundos.'); };
+$('btnLimparAv').onclick = async () => {
+  if (!confirm('Parar de enviar avisos para TODOS os celulares cadastrados?')) return;
+  await api.cmd('PUSHCLEAR');
+  try { const sub = await minhaInscricao(); if (sub) await sub.unsubscribe(); } catch {}
+  pushInfo = null; await espera(400); renderAvisos();
+};
+document.querySelectorAll('[data-av]').forEach(x => x.onchange = () => {
+  const bit = +x.dataset.av, on = x.checked;
+  acaoImediata(c => c.av = on ? (c.av | bit) : (c.av & ~bit), 'Preferência de avisos salva');
+});
 
 window.addEventListener('beforeunload', e => { if (alterado()) { e.preventDefault(); e.returnValue=''; } });
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).catch(()=>{});
