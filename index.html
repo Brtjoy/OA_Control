@@ -29,7 +29,7 @@
   .pill.on i{background:#69f0ae}
   .pill.wait i{background:#ffd54f}
 
-  main{max-width:560px;margin:0 auto;padding:12px 12px 110px}
+  main{max-width:560px;margin:0 auto;padding:12px 12px 170px}
   .card{background:var(--card);border-radius:16px;padding:16px;margin-bottom:12px;box-shadow:0 1px 3px rgba(16,40,70,.06)}
   .card h2{font-size:.82rem;text-transform:uppercase;letter-spacing:.05em;color:var(--mu);margin:0 0 12px;font-weight:700;display:flex;justify-content:space-between;align-items:center}
   .info{font-size:.82rem;color:var(--mu)}
@@ -93,7 +93,8 @@
   .dias{display:flex;gap:5px;margin:12px 0 8px}
   .dias-rot{font-size:.78rem;color:var(--mu);margin:12px 0 6px;display:flex;justify-content:space-between;align-items:center}
   .atalhos{display:flex;gap:4px}
-  .atalhos button{white-space:nowrap;font-size:.72rem;color:var(--az);padding:3px 7px;border-radius:6px;background:var(--az-cl);font-weight:600}
+  .atalhos button{white-space:nowrap;font-size:.75rem;color:var(--az);padding:4px 10px;border-radius:6px;background:#fff;border:1.5px solid #cdd6df;font-weight:600}
+  .atalhos button.on{background:var(--az);border-color:var(--az);color:#fff}
   .dias{display:flex;gap:5px;margin:0 0 10px}
   .dias button{flex:1;padding:8px 0 6px;border-radius:8px;background:#fff;border:1.5px solid #cdd6df;color:#9aa6b2;font-size:.78rem;font-weight:600;line-height:1.1}
   .dias button::after{content:"";display:block;height:12px;font-size:.7rem}
@@ -119,13 +120,13 @@
   .kv span{color:var(--mu)} .kv b{text-align:right}
 
   /* barra salvar */
-  .salvar{position:fixed;left:0;right:0;bottom:0;z-index:20;background:#1d2733;color:#fff;padding:12px 16px calc(12px + env(safe-area-inset-bottom));display:flex;align-items:center;gap:10px;transform:translateY(110%);transition:transform .25s}
-  .salvar.show{transform:none}
+  .salvar{position:fixed;left:0;right:0;bottom:calc(66px + env(safe-area-inset-bottom));z-index:20;border-radius:14px 14px 0 0;background:#1d2733;color:#fff;padding:10px 16px;display:flex;align-items:center;gap:10px;opacity:0;pointer-events:none;transform:translateY(16px);transition:opacity .2s,transform .2s}
+  .salvar.show{transform:none;opacity:1;pointer-events:auto}
   .salvar span{flex:1;font-size:.9rem}
   .salvar .desc{color:#b0bec5;padding:10px}
   .salvar .btn{background:#4fc3f7;color:#0b2233}
 
-  #toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%);background:#263238;color:#fff;padding:10px 18px;border-radius:22px;font-size:.9rem;opacity:0;transition:opacity .3s;pointer-events:none;z-index:30;max-width:90vw;text-align:center}
+  #toast{position:fixed;left:50%;bottom:150px;transform:translateX(-50%);background:#263238;color:#fff;padding:10px 18px;border-radius:22px;font-size:.9rem;opacity:0;transition:opacity .3s;pointer-events:none;z-index:30;max-width:90vw;text-align:center}
   #toast.show{opacity:1}
   .logo{width:28px;height:28px;border-radius:7px}
   .logo-grande{width:84px;height:84px;border-radius:20px;box-shadow:0 6px 18px rgba(23,105,170,.3)}
@@ -185,6 +186,15 @@
   .conf-txt{text-align:center;color:var(--mu);margin:0 0 18px;font-size:.95rem;line-height:1.4}
   .btn.forte{background:var(--vm);color:#fff}
   .link{color:var(--az);font-size:.85rem;text-decoration:underline;padding:10px 0 2px;text-align:left}
+  .chip.on{background:var(--az);color:#fff}
+  .chip:disabled{opacity:.35}
+  /* abas */
+  .tit-aba{font-size:1.45rem;margin:6px 4px 14px;letter-spacing:-.02em}
+  nav.abas{position:fixed;left:0;right:0;bottom:0;z-index:15;background:#fff;border-top:1px solid var(--bd);display:flex;justify-content:space-around;padding:6px 6px calc(6px + env(safe-area-inset-bottom));box-shadow:0 -2px 10px rgba(16,40,70,.05)}
+  nav.abas button{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:.72rem;font-weight:600;color:#8a96a3;padding:6px 0;border-radius:12px}
+  nav.abas svg{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
+  nav.abas button.on{color:var(--az)}
+  nav.abas button.on svg{background:var(--az-cl);border-radius:12px;padding:2px 14px;width:52px;height:28px}
   .demo-tag{background:#ffd54f;color:#5d4300;font-size:.7rem;font-weight:700;padding:3px 8px;border-radius:10px}
 </style>
 </head>
@@ -211,7 +221,8 @@
   </section>
 
   <div id="app" class="hidden">
-    <!-- estado -->
+    <div class="aba" data-aba="inicio">
+<!-- estado -->
     <section id="hero" class="card hero">
       <div class="rot" id="heroRot">Próxima rega</div>
       <div class="grande" id="heroGrande">—</div>
@@ -225,60 +236,42 @@
       </div>
     </section>
 
-    <!-- manual -->
+<!-- manual -->
     <section class="card">
       <h2>Regar agora</h2>
       <div class="chips" id="chipsManual"></div>
     </section>
 
-    <!-- agenda -->
+<!-- chuva -->
     <section class="card">
-      <h2>Horários <span class="info" id="tlRot" style="text-transform:none;letter-spacing:0;font-weight:500"></span></h2>
-      <div class="tl" id="tl"></div>
-      <div class="tl-esc"><span>0h</span><span>6h</span><span>12h</span><span>18h</span><span>24h</span></div>
-      <div id="progs"></div>
-      <button id="btnAdd" class="novo">+ Novo horário</button>
-      <div class="resumo" id="resumo"></div>
-    </section>
-
-    <!-- ajustes -->
-    <section class="card">
-      <h2>Ajustes</h2>
-      <div class="linha"><span><b>Ajuste sazonal</b><br><span class="info">Multiplica todos os tempos</span></span><b id="ajusteVal" style="font-size:1.3rem">100%</b></div>
-      <input type="range" id="ajuste" min="0" max="200" step="10">
-      <div class="escala"><span>0%</span><span>Inverno 50%</span><span>Normal 100%</span><span>Verão 150%</span><span>200%</span></div>
-      <div class="sep"></div>
-      <div class="linha">
-        <span><b>Tempo máximo por rega</b><br><span class="info">Trava de segurança da bomba</span></span>
-        <div class="step"><button data-max="-1">−</button><span id="maxVal">30 min</span><button data-max="1">+</button></div>
-      </div>
-    </section>
-
-    <!-- chuva -->
-    <section class="card">
-      <h2>Choveu? Pausar irrigação</h2>
+      <h2>Pausar a irrigação programada por</h2>
       <div class="chips">
         <button class="chip" data-pausa="1">1 dia</button>
         <button class="chip" data-pausa="2">2 dias</button>
         <button class="chip" data-pausa="3">3 dias</button>
         <button class="chip" data-pausa="7">1 semana</button>
       </div>
-      <p class="info" style="margin-bottom:0">As regas automáticas voltam sozinhas no fim do período.</p>
+      <p class="info" style="margin-bottom:0">Útil depois de uma chuva. As regas voltam sozinhas no fim do período.</p>
     </section>
+    </div>
 
-    <!-- Wi-Fi -->
+    <div class="aba hidden" data-aba="horarios">
+      <h1 class="tit-aba">Horários de rega</h1>
+<!-- agenda -->
     <section class="card">
-      <h2>Internet (Wi-Fi)</h2>
-      <div class="estado">
-        <div class="ic" id="wfIc">📶</div>
-        <div style="flex:1"><b id="wfTit">—</b><span class="info" id="wfSub"></span></div>
-        <button id="btnWifi" class="chip">Configurar</button>
-      </div>
+      <h2>Linha do dia <span class="info" id="tlRot" style="text-transform:none;letter-spacing:0;font-weight:500"></span></h2>
+      <div class="tl" id="tl"></div>
+      <div class="tl-esc"><span>0h</span><span>6h</span><span>12h</span><span>18h</span><span>24h</span></div>
+      <div id="progs"></div>
+      <button id="btnAdd" class="novo">+ Novo horário</button>
+      <div class="resumo" id="resumo"></div>
     </section>
+    </div>
 
-    <!-- avisos -->
+    <div class="aba hidden" data-aba="avisos">
+      <h1 class="tit-aba">Avisos no celular</h1>
+<!-- avisos -->
     <section class="card">
-      <h2>Avisos no celular</h2>
       <div class="estado" style="margin-bottom:12px">
         <div class="ic" id="avIc">🔔</div>
         <div><b id="avTit">Avisos desligados neste celular</b><span class="info" id="avSub">Receba um aviso quando regar, mesmo longe da propriedade.</span></div>
@@ -288,27 +281,66 @@
         <div class="opcao"><span>Rega iniciada</span><label class="sw peq"><input type="checkbox" data-av="1"><span class="tr"></span></label></div>
         <div class="opcao"><span>Rega concluída / interrompida</span><label class="sw peq"><input type="checkbox" data-av="2"><span class="tr"></span></label></div>
         <div class="opcao"><span>Falta de energia e problemas</span><label class="sw peq"><input type="checkbox" data-av="4"><span class="tr"></span></label></div>
-        <div class="chips" style="margin-top:12px"><button id="btnTeste" class="chip">Enviar aviso de teste</button><button id="btnLimparAv" class="chip">Remover todos os celulares</button></div>
+        <div class="chips" style="margin-top:12px"><button id="btnTeste" class="chip">Enviar aviso de teste</button><button id="btnPararAv" class="chip">Parar avisos neste celular</button></div>
       </div>
       <button id="btnRefazer" class="link hidden">Não está recebendo avisos? Toque aqui para reativar</button>
       <p class="info" id="avNota" style="margin-bottom:0">Os avisos precisam do controlador conectado ao Wi-Fi da propriedade.</p>
     </section>
+    </div>
 
-    <!-- avançado -->
+    <div class="aba hidden" data-aba="ajustes">
+      <h1 class="tit-aba">Ajustes</h1>
+<!-- ajustes -->
     <section class="card">
-      <details>
-        <summary>Controlador</summary>
-        <div style="margin-top:10px">
+      <h2>Regas</h2>
+      <div class="linha">
+        <span><b>Ajuste sazonal</b><br><span class="info">Aumenta ou diminui todas as regas de uma vez</span></span>
+        <div class="step"><button data-aj="-10">−</button><span id="ajusteVal">100%</span><button data-aj="10">+</button></div>
+      </div>
+      <p class="info" id="ajusteEx" style="margin:6px 0 0"></p>
+      <button class="link hidden" id="ajusteReset" data-ajp="100">Voltar para 100%</button>
+      <div class="sep"></div>
+      <div class="linha">
+        <span><b>🛡️ Proteção da bomba</b><br><span class="info" id="protTxt">Desliga a bomba se uma rega passar do limite</span></span>
+        <label class="sw"><input type="checkbox" id="prot"><span class="tr"></span></label>
+      </div>
+      <div id="protOpcoes" class="hidden" style="margin-top:6px">
+        <div class="linha"><span class="info">Desligar a bomba após</span>
+          <div class="step"><button data-lp="-1">−</button><span id="protVal">30 min</span><button data-lp="1">+</button></div></div>
+      </div>
+    </section>
+
+<!-- Wi-Fi -->
+    <section class="card">
+      <h2>Internet (Wi-Fi)</h2>
+      <div class="estado">
+        <div class="ic" id="wfIc">📶</div>
+        <div style="flex:1"><b id="wfTit">—</b><span class="info" id="wfSub"></span></div>
+        <button id="btnWifi" class="chip">Configurar</button>
+      </div>
+    </section>
+
+<!-- avançado -->
+    <section class="card">
+      <h2>Controlador</h2>
+        <div>
           <div class="kv"><span>Relógio</span><b id="hora">—</b></div>
           <div class="kv"><span>Última rega</span><b id="ult">—</b></div>
-          <div class="kv"><span>Firmware</span><b id="fw">—</b></div>
+          <div class="kv"><span>Versão</span><b id="fw">—</b></div>
           <div class="chips" style="margin-top:12px">
             <button id="btnSync" class="chip">Acertar relógio</button>
             <button id="btnDesc" class="chip">Desconectar</button>
           </div>
         </div>
-      </details>
     </section>
+    </div>
+
+    <nav class="abas">
+      <button data-ir="inicio" class="on"><svg viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/></svg>Início</button>
+      <button data-ir="horarios"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Horários</button>
+      <button data-ir="avisos"><svg viewBox="0 0 24 24"><path d="M6 16v-5a6 6 0 0 1 12 0v5l2 2H4z"/><path d="M10 20a2 2 0 0 0 4 0"/></svg>Avisos</button>
+      <button data-ir="ajustes"><svg viewBox="0 0 24 24"><path d="M4 6h9M17 6h3M4 12h3M11 12h9M4 18h11M19 18h1"/><circle cx="15" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="18" r="2"/></svg>Ajustes</button>
+    </nav>
   </div>
 </main>
 
@@ -381,7 +413,12 @@
 const BASE = '-3c4b-4e5a-9b1d-2f6c8a9e0b10';
 const UUID = { svc:'7a1f0001'+BASE, cfg:'7a1f0002'+BASE, hora:'7a1f0003'+BASE, cmd:'7a1f0004'+BASE, status:'7a1f0005'+BASE, wifi:'7a1f0006'+BASE, push:'7a1f0007'+BASE };
 const DIAS = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+const DIA_LONGO = ['domingo','segunda','terça','quarta','quinta','sexta','sábado'];
+const Cap = t => t.charAt(0).toUpperCase() + t.slice(1);
 const MAX_PROG = 8;
+const SEM_LIMITE = 7200;               // proteção desligada = limite máximo do controlador (2 h)
+const LIMITES = [900, 1800, 3600];     // atalhos da proteção: 15 min, 30 min, 1 h
+const PASSOS_LIM = [120,180,300,420,600,900,1200,1500,1800,2400,2700,3600,4500,5400];  // 2 min … 1 h 30
 const PASSOS = [30,60,120,180,240,300,420,600,900,1200,1500,1800,2400,2700,3600,4500,5400,7200]; // segundos
 const MANUAL_MIN = [1,5,10,15,30];
 
@@ -415,7 +452,7 @@ function fmtQuando(u, ref){
   const dif = Math.round((dia0 - hoje0)/86400);
   if (dif === 0) return `Hoje, ${hm}`;
   if (dif === 1) return `Amanhã, ${hm}`;
-  if (dif < 7)  return `${DIAS[d.getUTCDay()]}, ${hm}`;
+  if (dif < 7)  return `${Cap(DIA_LONGO[d.getUTCDay()])}, ${hm}`;
   return `${pad(d.getUTCDate())}/${pad(d.getUTCMonth()+1)}, ${hm}`;
 }
 function fmtFalta(s){
@@ -461,6 +498,7 @@ const ble = {
   salvarWifi(o){ return this.esc('wifi', JSON.stringify(o)); },
   async lerPush(){ return this.ch.push ? JSON.parse(await this.ler('push')) : null; },
   inscrever(sub){ return this.esc('push', JSON.stringify(sub)); },
+  removerInscricao(endpoint){ return this.esc('push', JSON.stringify({ remover: endpoint })); },
   async conectarGatt(){
     this.fila = Promise.resolve();
     const srv = await this.dev.gatt.connect();
@@ -492,7 +530,11 @@ async function conectar(){
 
 async function iniciarSessao(sincronizarHora){
   if (sincronizarHora) { await api.hora(agoraLocal()); await sincronizarInscricao(); }
-  if (!alterado()) { cfg = normalizar(await api.lerConfig()); salvo = JSON.stringify(cfg); }
+  if (!alterado()) {
+    const bruto = await api.lerConfig();
+    cfg = normalizar(JSON.parse(JSON.stringify(bruto))); salvo = JSON.stringify(cfg);
+    if (cfg.max !== (bruto.max ?? SEM_LIMITE)) { try { await api.salvarConfig(cfg); } catch {} }   // corrige trava antiga (ex.: 1 min)
+  }
   await atualizarStatus();
   clearInterval(poll);
   poll = setInterval(() => atualizarStatus().catch(()=>{}), 2000);
@@ -529,7 +571,7 @@ function pill(cls, txt){ $('pill').className = 'pill ' + cls; $('pillTxt').textC
 function mostrarErro(html){ const e=$('erro'); e.innerHTML=html; e.classList.remove('hidden'); }
 
 // ===================== Demonstração (sem placa) =====================
-const demo = {
+const demo = window.demo = {
   c:{ ativo:true, ajuste:100, max:1800, pausa:0, prog:[
       {h:6, m:0,  d:600, a:1, w:127},
       {h:18,m:30, d:300, a:1, w:0b0101010} ]},
@@ -542,6 +584,7 @@ const demo = {
   },
   async lerPush(){ return { k:'demo', n:this.pushN }; },
   async inscrever(){ this.pushN = Math.max(1, this.pushN); },
+  async removerInscricao(){ this.pushN = Math.max(0, this.pushN - 1); this.pushAtivo = false; },
   async lerConfig(){ return JSON.parse(JSON.stringify(this.c)); },
   async salvarConfig(o){ this.c = JSON.parse(JSON.stringify(o)); },
   async hora(){},
@@ -551,7 +594,6 @@ const demo = {
     if (c.startsWith('RUN:')) this.rega = { ini:a, dur: Math.min(+c.slice(4), this.c.max) };
     if (c === 'SCAN') { this.redes = []; setTimeout(() => this.redes = [
       {s:'Fazenda Boa Vista', r:-52, l:true}, {s:'Casa Sede 2.4G', r:-66, l:true}, {s:'Galpão', r:-78, l:true}, {s:'Visitantes', r:-80, l:false}], 2000); }
-    if (c === 'PUSHCLEAR') { this.pushN = 0; this.pushAtivo = false; }
     if (c === 'TESTE') mostrarNotificacaoLocal('🔔 Teste de aviso', 'Os avisos do Gota Azul estão funcionando neste celular.');
   },
   async lerStatus(){
@@ -622,14 +664,15 @@ function renderHero(){
   }
   $('heroRot').textContent = 'Próxima rega';
   $('heroGrande').textContent = fmtQuando(st.prox, agora);
-  $('heroSub').textContent = `${fmtFalta(st.prox - agora)} · ${fmtDur(st.proxDur)} de rega`;
+  const diaProx = DIA_LONGO[dataUTC(st.prox).getUTCDay()];
+  $('heroSub').textContent = `${Cap(diaProx)} · ${fmtFalta(st.prox - agora)} · ${fmtDur(st.proxDur)} de rega`;
 }
 setInterval(() => { if (st && st.regando) renderHero(); }, 1000);
 
 function renderControlador(){
   if (!st) return;
   const agora = st.agora + passou();
-  $('hora').textContent = st.rtcOk ? dataUTC(agora).toLocaleString('pt-BR',{timeZone:'UTC',weekday:'short',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit'}) : 'não ajustado';
+  $('hora').textContent = st.rtcOk ? dataUTC(agora).toLocaleString('pt-BR',{timeZone:'UTC',weekday:'long',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit'}) : 'não ajustado';
   $('ult').textContent = st.ult ? `${fmtQuando(st.ult, agora)} · ${fmtDur(st.ultDur)}` : '—';
   $('fw').textContent = st.fw || '—';
 }
@@ -638,7 +681,10 @@ function renderControlador(){
 function normalizar(c){
   c.prog = (c.prog || []).map(p => ({ h:p.h|0, m:p.m|0, d:p.d|0, a:p.a?1:0, w:(p.w ?? c.dias ?? 127) & 127 }));
   delete c.dias;
-  c.ajuste = c.ajuste ?? 100; c.max = c.max ?? 1800; c.pausa = c.pausa || 0; c.ativo = !!c.ativo; c.av = c.av ?? 7;
+  c.ajuste = c.ajuste ?? 100;
+  // a proteção nunca pode cortar uma rega programada: se o limite salvo for menor, desliga a proteção
+  const maiorRega = Math.max(0, ...(c.prog || []).map(p => Math.round(p.d * c.ajuste / 100)));
+  c.max = (!c.max || c.max >= SEM_LIMITE || c.max < maiorRega) ? SEM_LIMITE : c.max; c.pausa = c.pausa || 0; c.ativo = !!c.ativo; c.av = c.av ?? 7;
   return c;
 }
 const alterado = () => cfg && JSON.stringify(cfg) !== salvo;
@@ -659,7 +705,7 @@ function renderTimeline(){
     tl.appendChild(b);
   });
   const ag = document.createElement('div'); ag.className = 'agora'; ag.style.left = (seg/864) + '%'; tl.appendChild(ag);
-  $('tlRot').textContent = `hoje (${DIAS[wd].toLowerCase()})`;
+  $('tlRot').textContent = `hoje (${DIA_LONGO[wd]})`;
 }
 
 function renderProgs(){
@@ -675,12 +721,11 @@ function renderProgs(){
         <div class="step"><button data-act="menos">−</button><span>${fmtDur(p.d)}</span><button data-act="mais">+</button></div>
       </div>
       <div class="dias-rot"><span>Dias da rega:</span>
-        <span class="atalhos"><button data-act="w" data-w="127">Todos</button><button data-act="w" data-w="62">Seg–Sex</button><button data-act="w" data-w="0">Nenhum</button></span></div>
+        <span class="atalhos"><button data-act="todos" class="${p.w === 127 ? 'on' : ''}">${p.w === 127 ? '✓ ' : ''}Todos</button></span></div>
       <div class="dias">${DIAS.map((n,d)=>`<button data-act="dia" data-d="${d}" class="${(p.w>>d)&1?'on':''}">${n}</button>`).join('')}</div>
       <div class="frase ${p.w && p.a ? '' : 'ruim'}">${frase(p)}</div>
       <div class="prog-rod">
         <label class="sw peq"><input type="checkbox" data-act="ativo" ${p.a?'checked':''}><span class="tr"></span><span class="info">${p.a?'Ativo':'Desativado'}</span></label>
-        <span class="info">${dEf !== p.d ? 'Rega real: '+fmtDur(dEf) : ''}</span>
         <button class="rm" data-act="rm">Remover</button>
       </div>`;
     box.appendChild(el);
@@ -703,7 +748,8 @@ function descDias(w){
 function frase(p){
   if (!p.a) return 'Desativado: este horário não vai regar.';
   if (!p.w) return '⚠ Nenhum dia marcado: este horário não vai regar.';
-  return `Rega <b>${descDias(p.w)}</b> às <b>${pad(p.h)}:${pad(p.m)}</b> por <b>${fmtDur(durEfet(p))}</b>.`;
+  const aj = cfg.ajuste !== 100 ? ` (com ajuste sazonal de ${cfg.ajuste}%)` : '';
+  return `Rega <b>${descDias(p.w)}</b> às <b>${pad(p.h)}:${pad(p.m)}</b> por <b>${fmtDur(durEfet(p))}</b>${aj}.`;
 }
 function renderResumo(){
   let regas = 0, seg = 0;
@@ -711,9 +757,12 @@ function renderResumo(){
   $('resumo').textContent = regas ? `Por semana: ${regas} rega${regas>1?'s':''} · ${fmtDur(seg)} de água` : 'Nenhuma rega programada.';
 }
 function renderAjustes(){
-  $('ajuste').value = cfg.ajuste;
   $('ajusteVal').textContent = cfg.ajuste + '%';
-  $('maxVal').textContent = fmtDur(cfg.max);
+  $('ajusteReset').classList.toggle('hidden', cfg.ajuste === 100);
+  renderProtecao();
+  $('ajusteEx').textContent = cfg.ajuste === 100
+    ? 'Em 100%, cada horário rega exatamente o tempo escolhido.'
+    : `Cada horário vai regar ${cfg.ajuste < 100 ? 'menos' : 'mais'}: um horário de 10 min vai regar ${fmtDur(Math.round(600 * cfg.ajuste / 100))}.`;
 }
 function passo(v, dir, min=30){
   if (dir > 0) return PASSOS.find(x => x > v) ?? PASSOS[PASSOS.length-1];
@@ -727,10 +776,12 @@ $('progs').addEventListener('click', e => {
   if (!b.closest('.prog')) return;
   const i = +b.closest('.prog').dataset.i, p = cfg.prog[i];
   switch (b.dataset.act){
-    case 'mais':  p.d = passo(p.d, +1); break;
+    case 'mais':
+      p.d = passo(p.d, +1); ajustarLimite(); renderAjustes();
+      break;
     case 'menos': p.d = passo(p.d, -1); break;
     case 'dia':   p.w ^= 1 << +b.dataset.d; break;
-    case 'w':     p.w = +b.dataset.w; break;
+    case 'todos': p.w = p.w === 127 ? 0 : 127; break;
     case 'hora':  abrirRelogio(p.h, p.m, (h,m) => { p.h = h; p.m = m; renderProgs(); marcar(); }, i); return;
     case 'rm':
       confirmar({ icone:'🗑️', titulo:`Remover o horário das ${pad(p.h)}:${pad(p.m)}?`,
@@ -756,10 +807,40 @@ $('btnAdd').onclick = () => {
     $('progs').lastElementChild.scrollIntoView({behavior:'smooth', block:'center'});
   }, -1);
 };
-$('ajuste').oninput = () => { cfg.ajuste = +$('ajuste').value; renderAjustes(); renderProgs(); marcar(); };
-document.querySelectorAll('[data-max]').forEach(b => b.onclick = () => {
-  cfg.max = passo(cfg.max, +b.dataset.max, 60); renderAjustes(); renderProgs(); marcar();
+function definirAjuste(v){ cfg.ajuste = Math.max(10, Math.min(200, Math.round(v / 10) * 10)); ajustarLimite(); renderAjustes(); renderProgs(); marcar(); }
+document.querySelectorAll('[data-aj]').forEach(b => b.onclick = () => definirAjuste(cfg.ajuste + +b.dataset.aj));
+document.querySelectorAll('[data-ajp]').forEach(b => b.onclick = () => definirAjuste(+b.dataset.ajp));
+
+// ----- Proteção da bomba -----
+const maiorRegaAtual = () => Math.max(0, ...cfg.prog.filter(p => p.a).map(p => Math.round(p.d * cfg.ajuste / 100)));
+function ajustarLimite(){            // se uma rega ficou maior que o limite, sobe o limite (ou desliga a proteção)
+  if (cfg.max >= SEM_LIMITE) return;
+  const m = maiorRegaAtual();
+  if (m > cfg.max) cfg.max = PASSOS_LIM.find(l => l >= m) ?? SEM_LIMITE;
+}
+function renderProtecao(){
+  const ligada = cfg.max < SEM_LIMITE, m = maiorRegaAtual();
+  $('prot').checked = ligada;
+  $('protOpcoes').classList.toggle('hidden', !ligada);
+  $('protTxt').textContent = ligada ? `A bomba desliga sozinha após ${fmtDur(cfg.max)} ligada` : 'Desligada: cada rega dura exatamente o tempo escolhido';
+  $('protVal').textContent = fmtDur(cfg.max);
+  const i = PASSOS_LIM.indexOf(cfg.max);
+  document.querySelector('[data-lp="-1"]').disabled = !ligada || PASSOS_LIM.filter(l => l < cfg.max && l >= m).length === 0;
+  document.querySelector('[data-lp="1"]').disabled  = !ligada || cfg.max >= PASSOS_LIM[PASSOS_LIM.length-1];
+}
+document.querySelectorAll('[data-lp]').forEach(b => b.onclick = () => {
+  const m = maiorRegaAtual();
+  if (+b.dataset.lp > 0) cfg.max = PASSOS_LIM.find(l => l > cfg.max) ?? cfg.max;
+  else { const ant = PASSOS_LIM.filter(l => l < cfg.max && l >= m); if (ant.length) cfg.max = ant[ant.length-1]; else toast('O limite não pode ser menor que a maior rega programada.'); }
+  renderAjustes(); marcar();
 });
+$('prot').onchange = e => {
+  const m = maiorRegaAtual();
+  cfg.max = e.target.checked ? (m <= 1800 ? 1800 : (PASSOS_LIM.find(l => l >= m) ?? SEM_LIMITE)) : SEM_LIMITE;
+  if (e.target.checked && cfg.max >= SEM_LIMITE) toast('Há regas maiores que 1 h 30: a proteção não pode ficar abaixo delas.');
+  renderAjustes(); marcar();
+};
+
 
 // ===================== Salvar =====================
 function validar(c){
@@ -965,8 +1046,8 @@ async function renderAvisos(){
 }
 function renderAvisosNota(){
   const w = st && st.wifi;
-  $('avNota').textContent = !w || w.st !== 'ok'
-    ? '⚠ O controlador está sem internet. Os avisos ficam guardados (até 10) e saem quando a conexão voltar.'
+  $('avNota').innerHTML = !w || w.st !== 'ok'
+    ? '⚠ O controlador está sem internet. Os avisos ficam guardados (até 10) e saem quando a conexão voltar. <button class="link" onclick="irAba(\'ajustes\')">Configurar o Wi-Fi</button>'
     : `Avisos enviados pela internet da propriedade${st.fila ? ` · ${st.fila} na fila` : ''}.`;
 }
 const lembrar = (k, v) => { try { v === null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch {} };
@@ -1019,10 +1100,13 @@ async function mostrarNotificacaoLocal(t, b){
 $('btnAvisos').onclick = ativarAvisos;
 $('btnRefazer').onclick = ativarAvisos;
 $('btnTeste').onclick = async () => { await api.cmd('TESTE'); toast(api === demo ? 'Aviso de teste enviado' : 'Aviso enviado. Deve chegar em alguns segundos.'); };
-$('btnLimparAv').onclick = async () => {
-  if (!await confirmar({ icone:'🔕', titulo:'Remover todos os celulares?', texto:'Nenhum celular vai receber avisos até que sejam ativados de novo em cada um.', ok:'Remover todos', perigo:true })) return;
-  await api.cmd('PUSHCLEAR');
-  try { const sub = await minhaInscricao(); if (sub) await sub.unsubscribe(); } catch {}
+$('btnPararAv').onclick = async () => {
+  if (!await confirmar({ icone:'🔕', titulo:'Parar avisos neste celular?', texto:'Os outros celulares continuam recebendo normalmente. Você pode ativar de novo quando quiser.', ok:'Parar avisos', perigo:true })) return;
+  try {
+    const sub = await minhaInscricao();
+    if (sub) { await api.removerInscricao(sub.endpoint); await sub.unsubscribe(); }
+    else if (api === demo) await api.removerInscricao('');
+  } catch {}
   lembrar('gota-avisos', null);
   pushInfo = null; await espera(400); renderAvisos();
 };
@@ -1030,6 +1114,14 @@ document.querySelectorAll('[data-av]').forEach(x => x.onchange = () => {
   const bit = +x.dataset.av, on = x.checked;
   acaoImediata(c => c.av = on ? (c.av | bit) : (c.av & ~bit), 'Preferência de avisos salva');
 });
+
+// ===================== Abas =====================
+function irAba(nome){
+  document.querySelectorAll('.aba').forEach(a => a.classList.toggle('hidden', a.dataset.aba !== nome));
+  document.querySelectorAll('nav.abas [data-ir]').forEach(b => b.classList.toggle('on', b.dataset.ir === nome));
+  window.scrollTo(0, 0);
+}
+document.querySelectorAll('nav.abas [data-ir]').forEach(b => b.onclick = () => irAba(b.dataset.ir));
 
 window.addEventListener('beforeunload', e => { if (alterado()) { e.preventDefault(); e.returnValue=''; } });
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).catch(()=>{});
